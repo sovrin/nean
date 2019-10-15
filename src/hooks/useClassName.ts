@@ -24,23 +24,59 @@ const type = (value) => (
 
 /**
  *
- * @param value
+ * @param fns
  */
-const execute = (value) => (
+const pipe = (...fns) => (...args) => fns.reduce((acc, next) => next(acc), args);
+
+/**
+ *
+ * @param values
+ */
+const filter = (values) => values.filter(Boolean);
+
+/**
+ *
+ * @param values
+ */
+const map = (values) => values.map(value =>
     (operations[type(value)] || (() => value))(value)
 );
+
+/**
+ *
+ * @param values
+ */
+const flatten = (values) => (
+    values.reduce((acc, val) => Array.isArray(val)
+        ? acc.concat(flatten(val))
+        : acc.concat(val)
+        , []
+    )
+);
+
+/**
+ *
+ * @param values
+ */
+const join = (values) => values.join(' ');
+
+/**
+ *
+ * @param values
+ */
+const trim = (values) => values.trim();
 
 /**
  *
  * @param entries
  * @returns {string}
  */
-const useClassName = (...entries) => (
-    entries
-        .filter(Boolean)
-        .map(execute)
-        .join(' ')
-        .trim()
+const useClassName = pipe(
+    filter,
+    map,
+    flatten,
+    join,
+    trim
 );
 
 /**

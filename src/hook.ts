@@ -50,7 +50,7 @@ export const interceptHooks = (use: Array<Function>, context: any) => {
         }
     }
 
-    return context
+    return context;
 };
 
 /**
