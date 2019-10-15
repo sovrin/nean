@@ -56,6 +56,5 @@ export const interceptHooks = (use: Array<Function>, context: any) => {
 /**
  *
  * @param type
- * @param hook
  */
-export const createHook = (type: String, hook: Function) => ({type, hook});
+export const createHook = (type: String) => (hook: Function) => ({type, hook});

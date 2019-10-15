@@ -1,13 +1,17 @@
 {
   "name": "nean",
   "version": "1.0.0",
-  "description": "",
+  "description": "a kit for creating react components out of plain css frameworks",
   "main": "index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -p tsconfig.json --watch",
     "test": "tape tests/**/*.js"
   },
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sovrin/nean.git"

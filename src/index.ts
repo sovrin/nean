@@ -1,5 +1,6 @@
 import elementFactory from "./factory";
 import {createHook, Type} from './hook';
+import {useClassName, useType} from "./hooks";
 
 /**
  * User: Oleg Kamlowski <oleg.kamlowski@thomann.de>
@@ -8,6 +9,7 @@ import {createHook, Type} from './hook';
  */
 export default {
     elementFactory,
-    createHook,
-    Type
+    createHook: createHook(Type.PROPS),
+    useClassName,
+    useType,
 };
