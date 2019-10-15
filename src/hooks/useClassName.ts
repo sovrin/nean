@@ -39,7 +39,6 @@ const useClassName = (...entries) => (
     entries
         .filter(Boolean)
         .map(execute)
-        .flat()
         .join(' ')
         .trim()
 );
