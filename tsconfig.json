@@ -6,11 +6,18 @@
     ],
     "target": "es6",
     "moduleResolution": "node",
-//    "rootDir": "src/",
     //    "sourceMap": true,
     "declaration": true,
-//    "declarationDir": "./dist",
-//    "outDir": "lib/",
-    "removeComments": true
-  }
+    "declarationDir": "lib/types",
+    "outDir": "/",
+    "removeComments": true,
+    "stripInternal": true
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

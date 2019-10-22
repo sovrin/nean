@@ -1,4 +1,4 @@
-import hook from '../hook/index'
+import hook from '../hook'
 import useClassName from '../hooks/useClassName';
 
 /**
