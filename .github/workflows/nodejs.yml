@@ -1,9 +1,6 @@
 name: build, test and publish
 
 on:
-  pull_request:
-    branches:
-      - master
   push:
     branches:
       - master
