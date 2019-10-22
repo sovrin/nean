@@ -2,6 +2,7 @@
  *
  * @param target
  * @param accessed
+ * @internal
  */
 export const monitor = (target: any, accessed: Set<PropertyKey>): any => {
     const monitored = {};
@@ -36,6 +37,7 @@ export const monitor = (target: any, accessed: Set<PropertyKey>): any => {
  * @param target
  * @param prop
  * @param attributes
+ * @internal
  */
 export const define = (target: any, prop: PropertyKey, attributes: PropertyDescriptor) => (
     Object.defineProperty(target, prop, attributes)
@@ -45,6 +47,7 @@ export const define = (target: any, prop: PropertyKey, attributes: PropertyDescr
  *
  * @param keys
  * @param props
+ * @internal
  */
 export const sanitize = (keys, props) => {
 

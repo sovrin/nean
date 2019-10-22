@@ -1,3 +1,12 @@
+/**
+ *
+ * @param bool
+ * @param number
+ * @param string
+ * @param array
+ * @param object
+ * @internal
+ */
 const table = (bool, number, string, array, object) => ({
     [Boolean.toString()]: bool,
     [Number.toString()]: number,
@@ -6,6 +15,9 @@ const table = (bool, number, string, array, object) => ({
     [Object.toString()]: object,
 });
 
+/**
+ *
+ */
 const operations = table(
     (value) => value,
     (value) => value,
@@ -17,6 +29,7 @@ const operations = table(
 /**
  *
  * @param value
+ * @internal
  */
 const type = (value) => (
     value.constructor.toString()
@@ -25,18 +38,21 @@ const type = (value) => (
 /**
  *
  * @param fns
+ * @internal
  */
 const pipe = (...fns) => (...args) => fns.reduce((acc, next) => next(acc), args);
 
 /**
  *
  * @param values
+ * @internal
  */
 const filter = (values) => values.filter(Boolean);
 
 /**
  *
  * @param values
+ * @internal
  */
 const map = (values) => values.map(value =>
     (operations[type(value)] || (() => value))(value)
@@ -45,6 +61,7 @@ const map = (values) => values.map(value =>
 /**
  *
  * @param values
+ * @internal
  */
 const flatten = (values) => (
     values.reduce((acc, val) => Array.isArray(val)
@@ -57,12 +74,14 @@ const flatten = (values) => (
 /**
  *
  * @param values
+ * @internal
  */
 const join = (values) => values.join(' ');
 
 /**
  *
  * @param values
+ * @internal
  */
 const trim = (values) => values.trim();
 
