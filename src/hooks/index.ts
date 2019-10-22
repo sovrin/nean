@@ -5,3 +5,4 @@
  */
 export {default as useClassName} from './useClassName';
 export {default as useType} from './useType';
+export {default as useBadge} from './useBadge';

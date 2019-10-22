@@ -1,5 +1,5 @@
-const tape = require('tape');
-const {default: useClassName} = require('../lib/hooks/useClassName');
+import tape from "tape";
+import {useClassName} from '../lib/index';
 
 tape('test useClassName', ({plan, equal}) => {
     const props = {

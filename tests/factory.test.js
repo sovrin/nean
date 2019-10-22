@@ -1,6 +1,6 @@
-const tape = require('tape');
-const prepare = require('./prepare');
-const {useType} = require('../lib/hooks');
+import tape from "tape";
+import prepare from './prepare';
+import {useType} from '../lib/index';
 
 const builder = prepare();
 

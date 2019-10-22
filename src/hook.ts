@@ -8,6 +8,7 @@ export const Type = {
 /**
  *
  * @param fns
+ * @internal
  */
 const prepareHooks = (fns: Array<any>) => {
     const map = {};
@@ -27,6 +28,7 @@ const prepareHooks = (fns: Array<any>) => {
  *
  * @param use
  * @param context
+ * @internal
  */
 export const interceptHooks = (use: Array<Function>, context: any) => {
     if (!use) {
@@ -56,5 +58,11 @@ export const interceptHooks = (use: Array<Function>, context: any) => {
 /**
  *
  * @param type
+ * @internal
  */
 export const createHook = (type: String) => (hook: Function) => ({type, hook});
+
+/**
+ *
+ */
+export default createHook(Type.PROPS);
