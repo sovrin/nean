@@ -45,10 +45,22 @@ export const interceptHooks = (use: Array<Function>, context: any) => {
         }
 
         for (const fn of fns) {
-            define(context, prop, {
-                value: fn(context[prop]),
-                enumerable: true,
-            });
+            const result = fn(context[prop]);
+
+            if (typeof result !== "object") {
+                context[prop] = result;
+            } else {
+                for (const key in result) {
+                    if (!result.hasOwnProperty(key)) {
+                        continue;
+                    }
+
+                    define(context[prop], key, {
+                        enumerable: true,
+                        value: result[key]
+                    });
+                }
+            }
         }
     }
 

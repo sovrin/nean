@@ -6,7 +6,7 @@ const builder = prepare();
 
 const tester = ({equal, ok}) => ({type, props}) => ({
     classNameEquals: (value) => equal(value, props.className),
-    typeEquals: (value) => equal(value, type),
+    typeEquals: (value) => equal(type, value),
     isNullified: (keys) => ok(keys.every(key => props[key] === undefined)),
     isNull: (key) => equal(props[key], null),
     isNotNull: (key) => ok(props[key]),
