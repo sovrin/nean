@@ -1,6 +1,6 @@
 {
   "name": "nean",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "a kit for creating react components out of plain css frameworks",
   "main": "lib/index.js",
   "scripts": {
