@@ -7,7 +7,7 @@ tape('test useClassName', ({plan, equal}) => {
         active: true,
     };
 
-    const expect = 'true 1 foo biz buz bar buz btn-big active';
+    const expect = 'true 1 foo biz buz bar buz btn-big active positiveComputation';
     const actual = useClassName(true, false, 1, 0, 'foo', [
         'biz', 'buz',
     ], {
@@ -15,8 +15,16 @@ tape('test useClassName', ({plan, equal}) => {
     }, {
         ['btn-' + props.size]: (props.size),
         active: (props.active),
+    },
+    {
+        positiveComputation: () => {
+            return true;
+        },
+        negativeComputation: () => {
+            return false;
+        },
     });
 
     plan(1);
-    equal(expect, actual);
+    equal(actual, expect);
 });

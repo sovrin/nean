@@ -5,14 +5,16 @@
  * @param string
  * @param array
  * @param object
+ * @param fn
  * @internal
  */
-const table = (bool, number, string, array, object) => ({
+const table = (bool, number, string, array, object, fn) => ({
     [Boolean.toString()]: bool,
     [Number.toString()]: number,
     [String.toString()]: string,
     [Array.toString()]: array,
     [Object.toString()]: object,
+    [Function.toString()]: fn
 });
 
 /**
@@ -24,7 +26,8 @@ const operations = table(
     (value) => value,
     (value) => useClassName(...value),
     (value) => Object.keys(value).filter(key => useClassName(value[key])),
-);
+    (value) => useClassName(value()))
+;
 
 /**
  *
