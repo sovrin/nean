@@ -3,21 +3,35 @@ import {useClassName} from "./hooks";
 import {interceptHooks} from './hook';
 import {monitor, sanitize} from './utils';
 
+interface IFactory {
+    type?: string,
+    className?: string,
+    style?: Function,
+    extend?: Function,
+    render?: Function,
+}
+
 /**
  *
- * @param string
+ * @param type
  * @param baseClass
  * @param style
  * @param extend
  * @param render
  */
-const factory = ({type, className: baseClass, style, extend = (props) => (props), render = ({children}) => (children)}) => {
-    return forwardRef((props, ref) => {
+const factory = ({type = null, className: baseClass = null, style = null, extend = null, render = null}: IFactory) => {
+
+    /**
+     *
+     * @param props
+     * @param ref
+     */
+    const build = (props, ref) => {
         let {className, use} = props;
 
         const keys = new Set(['use']);
-        const monitored = monitor(props, keys);
 
+        const monitored = monitor(props, keys);
         const classes = (style && style(monitored)) || null;
         const extended = (extend && extend(monitored)) || null;
         const children = (render && render(monitored)) || null;
@@ -50,7 +64,9 @@ const factory = ({type, className: baseClass, style, extend = (props) => (props)
             intercepted.type,
             intercepted.props
         );
-    });
+    };
+
+    return forwardRef(build);
 };
 
 /**
