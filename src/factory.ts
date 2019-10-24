@@ -19,7 +19,7 @@ interface IFactory {
  * @param extend
  * @param render
  */
-const factory = ({type = null, className: baseClass = null, style = null, extend = null, render = null}: IFactory) => {
+const factory = ({type = null, className: baseClass = null, style = null, extend = (props) => (props), render = ({children}) => (children)}) => {
 
     /**
      *
