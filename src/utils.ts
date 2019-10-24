@@ -59,5 +59,5 @@ export const sanitize = (keys, props) => {
      */
     const remove = ({[key]: value, ...rest}, key) => rest;
 
-    return [...keys].reduce(remove, props);
+    return keys.reduce(remove, props);
 };

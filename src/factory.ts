@@ -32,7 +32,7 @@ const factory = ({type, className: baseClass, style, extend = (props) => (props)
             className,
         );
 
-        const sanitized = sanitize(keys, {
+        const sanitized = sanitize([...keys], {
             ...props,
             ...extended,
         });
