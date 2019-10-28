@@ -32,11 +32,36 @@ const prepareHooks = (fns: Array<any>) => {
 
 /**
  *
+ * @param fns
+ */
+export const interceptHooks = (fns: Array<any>) => {
+    const map = {};
+
+    for (const fn of fns) {
+        if (!fn) {
+            continue;
+        }
+
+        const {name, hook} = fn;
+        map[name] = hook;
+    }
+
+    return (name) => {
+        if (!map[name]) {
+            return () => undefined;
+        }
+
+        return map[name];
+    };
+};
+
+/**
+ *
  * @param use
  * @param context
  * @internal
  */
-export const interceptHooks = (use: Array<Function>, context: any) => {
+export const useHooks = (use: Array<Function>, context: any) => {
     if (!use) {
         return context
     }
@@ -78,7 +103,7 @@ export const interceptHooks = (use: Array<Function>, context: any) => {
  * @param type
  * @internal
  */
-export const createHook = (type: String) => (hook: Function) => ({type, hook});
+export const createHook = (type: String) => (name: string, hook: Function) => ({name, type, hook});
 
 /**
  *

@@ -1,6 +1,6 @@
 import tape from "tape";
 import prepare from './prepare';
-import {useType} from '../lib/index';
+import {useType, intercept} from '../lib/index';
 
 const builder = prepare();
 
@@ -254,6 +254,29 @@ tape('factory useType inline', ({plan, ...t}) => {
     isNullified(['use']);
 });
 
+tape('factory hookInterception', ({plan, ...t}) => {
+    const test = tester(t);
+    const factory = builder({
+        type: 'div',
+        render: ({use}) => {
+            const type = intercept(use)('type');
+
+            return type();
+        },
+    });
+    const props = {
+        use: [
+            useType('ul'),
+        ]
+    };
+    const element = factory(props);
+    const {typeEquals, isNullified, is} = test(element);
+
+    plan(3);
+    typeEquals('ul');
+    isNullified(['use']);
+    is('children', 'ul');
+});
 
 tape('factory complete', ({plan, ...t}) => {
     const test = tester(t);

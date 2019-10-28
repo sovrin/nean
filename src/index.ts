@@ -1,8 +1,6 @@
 import elementFactory from "./factory";
-import {createHook as hook, Type} from './hook';
+import hook, {interceptHooks} from './hook';
 import {useClassName, useType} from "./hooks";
-
-const createHook = hook(Type.PROPS);
 
 /**
  * User: Oleg Kamlowski <oleg.kamlowski@thomann.de>
@@ -11,7 +9,8 @@ const createHook = hook(Type.PROPS);
  */
 export {
     elementFactory as factory,
-    createHook as hook,
+    hook as hook,
+    interceptHooks as intercept,
     useClassName as useClassName,
     useType as useType,
 };

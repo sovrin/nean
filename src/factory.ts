@@ -1,6 +1,6 @@
 import {createElement, forwardRef} from 'react';
 import {useClassName} from "./hooks";
-import {interceptHooks} from './hook';
+import {useHooks} from './hook';
 import {monitor, sanitize} from './utils';
 
 interface IFactory {
@@ -63,11 +63,11 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
             ref,
         };
 
-        const intercepted = interceptHooks(use, {type, props});
+        const result = useHooks(use, {type, props});
 
         return createElement(
-            intercepted.type,
-            intercepted.props
+            result.type,
+            result.props
         );
     };
 
