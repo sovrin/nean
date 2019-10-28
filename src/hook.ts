@@ -13,7 +13,13 @@ export const Type = {
 const prepareHooks = (fns: Array<any>) => {
     const map = {};
 
-    for (const {type, hook} of fns) {
+    for (const fn of fns) {
+        if (!fn) {
+            continue;
+        }
+
+        const {type, hook} = fn;
+
         if (!map[type]) {
             map[type] = [];
         }
