@@ -235,6 +235,26 @@ tape('factory useType', ({plan, ...t}) => {
     isNullified(['use']);
 });
 
+tape('factory useType inline', ({plan, ...t}) => {
+    const test = tester(t);
+    const factory = builder({
+        type: 'div',
+        extend: () => ({
+            use: [
+                useType('ul')
+            ]
+        })
+    });
+    const props = {};
+    const element = factory(props);
+    const {typeEquals, isNullified} = test(element);
+
+    plan(2);
+    typeEquals('ul');
+    isNullified(['use']);
+});
+
+
 tape('factory complete', ({plan, ...t}) => {
     const test = tester(t);
     const factory = builder({
