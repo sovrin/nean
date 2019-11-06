@@ -33,8 +33,9 @@ const prepareHooks = (fns: Array<any>) => {
 /**
  *
  * @param fns
+ * @param destructive
  */
-export const interceptHooks = (fns: Array<any>) => {
+export const interceptHooks = (fns: Array<any>, destructive = false) => {
     const map = {};
 
     for (const fn of fns) {
@@ -42,16 +43,23 @@ export const interceptHooks = (fns: Array<any>) => {
             continue;
         }
 
-        const {name, hook} = fn;
-        map[name] = hook;
+        const {name} = fn;
+        map[name] = fn;
     }
 
     return (name) => {
-        if (!map[name]) {
+        const target = map[name];
+
+        if (!target) {
             return () => undefined;
         }
 
-        return map[name];
+        if (destructive) {
+            const index = fns.indexOf(target);
+            fns.splice(index, 1);
+        }
+
+        return target.hook;
     };
 };
 

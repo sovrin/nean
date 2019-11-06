@@ -278,6 +278,33 @@ tape('factory hookInterception', ({plan, ...t}) => {
     is('children', 'ul');
 });
 
+tape('factory hookInterception destructive', ({plan, ...t}) => {
+    const test = tester(t);
+    const factory = builder({
+        type: 'div',
+        render: ({use}) => {
+            const type = intercept(use, true)('type');
+
+            t.ok(use.length === 0);
+
+            return type();
+        },
+    });
+    const props = {
+        use: [
+            useType('ul'),
+        ]
+    };
+    const element = factory(props);
+    const {typeEquals, isNullified, is} = test(element);
+
+    plan(4);
+    typeEquals('div');
+    isNullified(['use']);
+    is('children', 'ul');
+});
+
+
 tape('factory complete', ({plan, ...t}) => {
     const test = tester(t);
     const factory = builder({
