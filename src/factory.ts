@@ -1,7 +1,7 @@
 import {createElement, forwardRef} from 'react';
 import {useClassName} from "./hooks";
 import {useHooks} from './hook';
-import {monitor, sanitize} from './utils';
+import {capture, sanitize} from './utils';
 
 interface IFactory {
     type?: string,
@@ -30,11 +30,11 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
         let {className} = props;
 
         const keys = new Set(['use']);
-
-        const monitored = monitor(props, keys);
-        const classes = (style && style(monitored)) || null;
-        const extended = (extend && extend(monitored)) || null;
-        const children = (render && render(monitored)) || null;
+        const {captured, release} = capture(props, keys);
+        const classes = (style && style(captured)) || null;
+        const extended = (extend && extend(captured)) || null;
+        const children = (render && render(captured)) || null;
+        release();
 
         if (!type) {
             return children;

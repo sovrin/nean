@@ -4,8 +4,9 @@
  * @param accessed
  * @internal
  */
-export const monitor = (target: any, accessed: Set<PropertyKey>): any => {
-    const monitored = {};
+export const capture = (target: any, accessed: Set<PropertyKey>): any => {
+    const captured = {};
+    let released = false;
 
     /**
      *
@@ -13,9 +14,16 @@ export const monitor = (target: any, accessed: Set<PropertyKey>): any => {
      * @param prop
      */
     const spy = (target: any, prop: PropertyKey) => {
-        accessed.add(prop);
+        !released && accessed.add(prop);
 
         return target[prop];
+    };
+
+    /**
+     *
+     */
+    const release = () => {
+        released = true;
     };
 
     for (const prop in target) {
@@ -23,13 +31,16 @@ export const monitor = (target: any, accessed: Set<PropertyKey>): any => {
             continue;
         }
 
-        define(monitored, prop, {
+        define(captured, prop, {
             enumerable: true,
             get: () => spy(target, prop),
         });
     }
 
-    return monitored;
+    return {
+        captured,
+        release
+    };
 };
 
 /**
