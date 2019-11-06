@@ -35,7 +35,7 @@ const prepareHooks = (fns: Array<any>) => {
  * @param fns
  * @param destructive
  */
-export const interceptHooks = (fns: Array<any>, destructive = false) => {
+export const interceptHooks = (fns: Array<any> = [], destructive = false) => {
     const map = {};
 
     for (const fn of fns) {
