@@ -22,8 +22,8 @@ export const capture = (target: any, accessed: Set<PropertyKey>): any => {
     /**
      *
      */
-    const release = () => {
-        released = true;
+    const release = (value = true) => {
+        released = value;
     };
 
     for (const prop in target) {

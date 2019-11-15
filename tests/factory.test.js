@@ -304,7 +304,6 @@ tape('factory hookInterception destructive', ({plan, ...t}) => {
     is('children', 'ul');
 });
 
-
 tape('factory complete', ({plan, ...t}) => {
     const test = tester(t);
     const factory = builder({

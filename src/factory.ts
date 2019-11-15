@@ -27,6 +27,7 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
      * @param ref
      */
     const build = (props, ref) => {
+        props = {...props, ref};
         let {className} = props;
 
         const keys = new Set(['use']);
@@ -54,6 +55,7 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
         const sanitized = sanitize([...keys], {
             ...props,
             ...extended,
+            use: undefined
         });
 
         props = {
