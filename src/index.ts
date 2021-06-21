@@ -1,5 +1,5 @@
 import factory from './factory';
-import hook, {intercept, create} from './hook';
+import createHook, {interceptHook} from './hook';
 import {useType} from './hooks';
 
 /**
@@ -9,8 +9,7 @@ import {useType} from './hooks';
  */
 export default factory;
 export {
-    intercept,
-    create,
-    hook,
+    interceptHook,
+    createHook,
     useType,
 };

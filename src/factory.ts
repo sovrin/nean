@@ -7,11 +7,11 @@ type Props<T> = {
     [P in keyof T]?: any
 } & {children?: ReactNode};
 
-export type IFactory<T> = {
+export type Config<T> = {
     type?: string,
     className?: string,
     style?: (props: Props<T>) => any,
-    alias?: (props: Props<T>) => any,
+    extend?: (props: Props<T>) => any,
     render?: (props: Props<T>) => any,
 }
 
@@ -20,10 +20,10 @@ export type IFactory<T> = {
  * @param type
  * @param baseClass
  * @param style
- * @param alias
+ * @param extend
  * @param render
  */
-const factory = <T>({type = null, className: baseClass = null, style = null, alias = null, render = ({children}) => (children)}: IFactory<T>) => {
+const factory = <T>({type = null, className: baseClass = null, style = null, extend = null, render = ({children}) => (children)}: Config<T>) => {
 
     /**
      *
@@ -37,7 +37,7 @@ const factory = <T>({type = null, className: baseClass = null, style = null, ali
         const keys: Set<string> = new Set([]);
         const {captured, release} = capture(props, keys);
         const classes = (style && style(captured)) || null;
-        const aliased = (alias && alias(captured)) || null;
+        const extended = (extend && extend(captured)) || null;
         const children = (render && render(captured)) || null;
         release();
 
@@ -53,7 +53,7 @@ const factory = <T>({type = null, className: baseClass = null, style = null, ali
 
         const {use = null} = {
             ...props,
-            ...aliased,
+            ...extended,
         };
 
         if (use) {
@@ -62,7 +62,7 @@ const factory = <T>({type = null, className: baseClass = null, style = null, ali
 
         const sanitized = sanitize([...keys], {
             ...props,
-            ...aliased,
+            ...extended,
         });
 
         props = {

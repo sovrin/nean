@@ -1,7 +1,7 @@
-import prepare from './prepare';
+import mock from './mock';
 import assert from 'assert';
 import {describe} from 'mocha';
-import {intercept, create, hook, useType} from '../src';
+import {interceptHook, createHook, useType} from '../src';
 
 const tester = () => ({type, props}: any) => ({
     classNameEquals: (value) => assert(value === props.className),
@@ -12,7 +12,7 @@ const tester = () => ({type, props}: any) => ({
 });
 
 describe('nean', () => {
-    const render = prepare();
+    const render = mock();
     const test = tester();
 
     describe('factory', () => {
@@ -119,14 +119,14 @@ describe('nean', () => {
             });
         });
 
-        describe('alias', () => {
-            it('should pass through aliased prop and remove used', () => {
+        describe('extend', () => {
+            it('should pass through extended prop and remove used', () => {
                 const props = {
                     foo: 'bar',
                 };
                 const element = render(props, {
                     type: 'div',
-                    alias: ({foo}) => ({
+                    extend: ({foo}) => ({
                         'foobar': foo,
                     }),
                 });
@@ -136,31 +136,33 @@ describe('nean', () => {
                 isNotNull('foobar');
             });
 
-            it('should pass through all aliased props and remove used', () => {
+            it('should pass through all extended props and remove used', () => {
                 const props = {
                     foo: 'bar',
                     bar: 'foo',
                 };
                 const element = render(props, {
                     type: 'div',
-                    alias: ({foo, bar}) => ({
+                    extend: ({foo, bar}) => ({
                         'foobar': foo,
+                        'fizz': 'buzz'
                     }),
                 });
 
-                const {isNullified, isNotNull} = test(element);
+                const {isNullified, isNotNull, is} = test(element);
                 isNullified(['foo', 'bar']);
                 isNotNull('foobar');
+                is('fizz', 'buzz');
             });
 
-            it('should pass through used aliased prop and remove used', () => {
+            it('should pass through used extended prop and remove used', () => {
                 const props = {
                     foo: 'bar',
                     bar: 'foo',
                 };
                 const element = render(props, {
                     type: 'div',
-                    alias: ({foo}) => ({
+                    extend: ({foo}) => ({
                         'foobar': foo,
                     }),
                 });
@@ -219,11 +221,11 @@ describe('nean', () => {
                 isNullified(['use']);
             });
 
-            it('should overwrite type to while being aliased', () => {
+            it('should overwrite type to while being extended', () => {
                 const props = {};
                 const element = render(props, {
                     type: 'div',
-                    alias: () => ({
+                    extend: () => ({
                         use: [
                             useType('ul'),
                         ],
@@ -240,7 +242,7 @@ describe('nean', () => {
                 const element = render(props, {
                     type: 'div',
                     render: () => {
-                        const unknown = intercept()('unknown');
+                        const unknown = interceptHook()('unknown');
                         assert(unknown() === undefined);
 
                         return null;
@@ -255,14 +257,13 @@ describe('nean', () => {
             it('should use custom hook', () => {
                 const props = {
                     use: [
-                        // @ts-ignore
-                        create('foo')
+                        createHook('foo', () => {})
                     ]
                 };
                 const element = render(props, {
                     type: 'div',
                     render: () => {
-                        const unknown = intercept()('unknown');
+                        const unknown = interceptHook()('unknown');
                         assert(unknown() === undefined);
 
                         return null;
@@ -275,11 +276,11 @@ describe('nean', () => {
             });
 
             it('should intercept custom hook', () => {
-                const useFoo = (value) => hook('foo', (current) => {
+                const useFoo = (value) => createHook('foo', (current) => {
                     return value === current;
                 });
 
-                const useBar = (foo) => hook('bar', ({bar} = {bar: null}) => ({
+                const useBar = (foo) => createHook('bar', ({bar} = {bar: null}) => ({
                     foo,
                     bar,
                 }));
@@ -293,8 +294,8 @@ describe('nean', () => {
                 const element = render(props, {
                     type: 'div',
                     render: ({use}) => {
-                        const foo = intercept(use)('foo');
-                        const bar = intercept(use)('bar');
+                        const foo = interceptHook(use)('foo');
+                        const bar = interceptHook(use)('bar');
                         assert(foo('foo') === true);
                         assert(bar().foo === "bar");
                         assert(bar().bar === null);
@@ -319,7 +320,7 @@ describe('nean', () => {
                 const element = render(props, {
                     type: 'div',
                     render: ({use}) => {
-                        const type = intercept(use)('type');
+                        const type = interceptHook(use)('type');
                         assert(use.length === 1);
 
                         return type();
@@ -362,11 +363,11 @@ describe('nean', () => {
                 const element = render(props, {
                     type: 'div',
                     render: ({use}) => {
-                        const type = intercept(use, true)('type');
+                        const type = interceptHook(use, true)('type');
 
                         assert(use.length === 0);
 
-                        const anotherType = intercept(use, true)('type');
+                        const anotherType = interceptHook(use, true)('type');
                         assert(anotherType() === undefined)
 
                         return type();
@@ -407,7 +408,7 @@ describe('nean', () => {
                     'btn-primary': primary,
                     link,
                 }),
-                alias: ({fiz, buz}) => ({foobar: fiz + buz}),
+                extend: ({fiz, buz}) => ({foobar: fiz + buz}),
                 render: ({foo}) => (foo),
             });
 

@@ -32,7 +32,7 @@ const prepare = (hooks: Hook[]) => (
  * @param hooks
  * @param destructive
  */
-export const intercept = (hooks: Function[] = [], destructive = false) => {
+export const interceptHook = (hooks: Function[] = [], destructive = false) => {
     const map = {};
 
     for (const hook of hooks) {
@@ -101,6 +101,7 @@ export const evaluate = (use: Hook[], context: any) => {
 /**
  *
  * @param scope
+ * @internal
  */
 export const create = (scope: Scope) => (name: string, hook: Function) => ({
     name,
