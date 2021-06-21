@@ -1,52 +1,48 @@
-import {define} from "./utils";
+import {define} from './utils';
 
-export const Type = {
-    TYPE: 'type',
-    PROPS: 'props'
-};
+type Scope = typeof Scopes[number];
+
+const Scopes = ['type', 'props'] as const;
+
+type Hook = {
+    name: string,
+    scope: Scope,
+    hook: Function,
+}
 
 /**
  *
- * @param fns
+ * @param hooks
  * @internal
  */
-const prepareHooks = (fns: Array<any>) => {
-    const map = {};
-
-    for (const fn of fns) {
-        if (!fn) {
-            continue;
+const prepare = (hooks: Hook[]) => (
+    hooks.reduce((acc, {scope, hook}) => {
+        if (!acc[scope]) {
+            acc[scope] = [];
         }
 
-        const {type, hook} = fn;
+        acc[scope].push((args) => hook(args));
 
-        if (!map[type]) {
-            map[type] = [];
-        }
-
-        map[type].push((args) => hook(args));
-    }
-
-    return map;
-};
+        return acc;
+    }, {})
+);
 
 /**
  *
- * @param fns
+ * @param hooks
  * @param destructive
  */
-export const interceptHooks = (fns: Array<any> = [], destructive = false) => {
+export const intercept = (hooks: Function[] = [], destructive = false) => {
     const map = {};
 
-    for (const fn of fns) {
-        if (!fn) {
-            continue;
-        }
-
-        const {name} = fn;
-        map[name] = fn;
+    for (const hook of hooks) {
+        const {name} = hook;
+        map[name] = hook;
     }
 
+    /**
+     *
+     */
     return (name) => {
         const target = map[name];
 
@@ -55,8 +51,8 @@ export const interceptHooks = (fns: Array<any> = [], destructive = false) => {
         }
 
         if (destructive) {
-            const index = fns.indexOf(target);
-            fns.splice(index, 1);
+            const index = hooks.indexOf(target);
+            hooks.splice(index, 1);
         }
 
         return target.hook;
@@ -69,34 +65,30 @@ export const interceptHooks = (fns: Array<any> = [], destructive = false) => {
  * @param context
  * @internal
  */
-export const useHooks = (use: Array<Function>, context: any) => {
+export const evaluate = (use: Hook[], context: any) => {
     if (!use) {
-        return context
+        return context;
     }
 
-    const prepared = prepareHooks(use);
+    const prepared = prepare(use);
 
-    for (const prop of Object.values(Type)) {
-        const fns = prepared[prop];
+    for (const scope of Scopes) {
+        const hooks = prepared[scope];
 
-        if (!fns) {
+        if (!hooks) {
             continue;
         }
 
-        for (const fn of fns) {
-            const result = fn(context[prop]);
+        for (const hook of hooks) {
+            const result = hook(context[scope]);
 
-            if (typeof result !== "object") {
-                context[prop] = result;
-            } else {
-                for (const key in result) {
-                    if (!result.hasOwnProperty(key)) {
-                        continue;
-                    }
-
-                    define(context[prop], key, {
+            if (scope === 'type' && typeof result === 'string') {
+                context[scope] = result;
+            } else if (scope === 'props' && typeof result === 'object') {
+                for (const [key, value] of Object.entries(result)) {
+                    define(context[scope], key, {
                         enumerable: true,
-                        value: result[key]
+                        value,
                     });
                 }
             }
@@ -108,12 +100,15 @@ export const useHooks = (use: Array<Function>, context: any) => {
 
 /**
  *
- * @param type
- * @internal
+ * @param scope
  */
-export const createHook = (type: String) => (name: string, hook: Function) => ({name, type, hook});
+export const create = (scope: Scope) => (name: string, hook: Function) => ({
+    name,
+    scope,
+    hook,
+});
 
 /**
  *
  */
-export default createHook(Type.PROPS);
+export default create('props');

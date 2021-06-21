@@ -1,12 +1,13 @@
 {
   "name": "nean",
-  "version": "1.5.2",
-  "description": "a kit for creating react components out of plain css frameworks",
+  "version": "2.0.0",
+  "description": "kit for porting css frameworks to reactjs",
   "main": "lib/index.js",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw",
-    "test": "tape -r esm tests/**/*.js"
+    "test": "mocha -r ts-node/register/transpile-only --full-trace 'test/**/*.ts'",
+    "coverage": "nyc npm test"
   },
   "files": [
     "lib"
@@ -26,16 +27,25 @@
   },
   "homepage": "https://github.com/sovrin/nean#readme",
   "devDependencies": {
-    "@types/node": "^12.11.5",
-    "esm": "^3.2.25",
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "@rollup/plugin-typescript": "^8.2.1",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^15.12.4",
+    "@types/proxyquire": "^1.3.28",
+    "@types/react": "^16",
+    "mocha": "^8.4.0",
+    "nyc": "^15.1.0",
     "proxyquire": "^2.1.3",
-    "react": "^16.10.2",
-    "rollup": "^1.25.1",
-    "rollup-plugin-typescript2": "^0.25.2",
-    "tape": "^4.11.0",
-    "typescript": "^3.6.4"
+    "react": "^16",
+    "rollup": "^2.52.1",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.4"
   },
   "peerDependencies": {
-    "react": "^16.10.2"
+    "react": "^16"
+  },
+  "dependencies": {
+    "@thomann/classnames": "^1.2.1"
   }
 }

@@ -1,5 +1,7 @@
-import typescript from 'rollup-plugin-typescript2';
 import pkg from './package.json';
+import typescript from '@rollup/plugin-typescript';
+import commonJS from '@rollup/plugin-commonjs';
+import {nodeResolve} from '@rollup/plugin-node-resolve';
 
 const peerDependencies = Object.keys(pkg.peerDependencies || {});
 
@@ -9,10 +11,10 @@ const peerDependencies = Object.keys(pkg.peerDependencies || {});
  * Time: 13:43
  */
 export default {
-    input:'src/index.ts',
+    input: 'src/index.ts',
     output: {
         name: 'nean',
-        dir: './lib',
+        dir: './dist',
         format: 'es',
     },
     external: [
@@ -20,7 +22,9 @@ export default {
     ],
     plugins: [
         typescript({
-            useTsconfigDeclarationDir: true
+            tsconfig: './tsconfig.prod.json',
         }),
+        nodeResolve(),
+        commonJS(),
     ],
 };

@@ -1,9 +1,12 @@
-name: build, test and publish
+name: release
 
 on:
   push:
-    branches:
-      - master
+    tags:
+      - 'v*'
+
+env:
+  CI: true
 
 jobs:
   build:
@@ -15,9 +18,8 @@ jobs:
           node-version: 12
       - run: npm i
       - run: npm run build
-      - run: npm run test
 
-  publish-npm:
+  publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -26,8 +28,6 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
-      - run: npm i
-      - run: npm run build
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}

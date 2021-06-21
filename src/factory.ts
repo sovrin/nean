@@ -1,14 +1,18 @@
-import {createElement, forwardRef} from 'react';
-import {useClassName} from "./hooks";
-import {useHooks} from './hook';
+import {createElement, forwardRef, ReactNode} from 'react';
+import classNames from '@thomann/classnames';
+import {evaluate} from './hook';
 import {capture, sanitize} from './utils';
 
-interface IFactory {
+type Props<T> = {
+    [P in keyof T]?: any
+} & {children?: ReactNode};
+
+export type IFactory<T> = {
     type?: string,
     className?: string,
-    style?: Function,
-    extend?: Function,
-    render?: Function,
+    style?: (props: Props<T>) => any,
+    alias?: (props: Props<T>) => any,
+    render?: (props: Props<T>) => any,
 }
 
 /**
@@ -16,10 +20,10 @@ interface IFactory {
  * @param type
  * @param baseClass
  * @param style
- * @param extend
+ * @param alias
  * @param render
  */
-const factory = ({type = null, className: baseClass = null, style = null, extend = (props) => (props), render = ({children}) => (children)}: IFactory) => {
+const factory = <T>({type = null, className: baseClass = null, style = null, alias = null, render = ({children}) => (children)}: IFactory<T>) => {
 
     /**
      *
@@ -30,10 +34,10 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
         props = {...props, ref};
         let {className} = props;
 
-        const keys = new Set(['use']);
+        const keys: Set<string> = new Set([]);
         const {captured, release} = capture(props, keys);
         const classes = (style && style(captured)) || null;
-        const extended = (extend && extend(captured)) || null;
+        const aliased = (alias && alias(captured)) || null;
         const children = (render && render(captured)) || null;
         release();
 
@@ -41,7 +45,7 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
             return children;
         }
 
-        className = useClassName(
+        className = classNames(
             baseClass,
             classes,
             className,
@@ -49,13 +53,16 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
 
         const {use = null} = {
             ...props,
-            ...extended,
+            ...aliased,
         };
+
+        if (use) {
+            keys.add('use');
+        }
 
         const sanitized = sanitize([...keys], {
             ...props,
-            ...extended,
-            use: undefined
+            ...aliased,
         });
 
         props = {
@@ -65,7 +72,7 @@ const factory = ({type = null, className: baseClass = null, style = null, extend
             ref,
         };
 
-        const result = useHooks(use, {type, props});
+        const result = evaluate(use, {type, props});
 
         return createElement(
             result.type,

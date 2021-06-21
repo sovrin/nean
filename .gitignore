@@ -1,7 +1,9 @@
+/.idea
 /node_modules
-lib
-temp
+/.nyc_output
+/dist
+/coverage
+/temp
 
 package-lock.json
 
-.idea

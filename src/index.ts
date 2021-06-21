@@ -1,16 +1,16 @@
-import elementFactory from "./factory";
-import hook, {interceptHooks} from './hook';
-import {useClassName, useType} from "./hooks";
+import factory from './factory';
+import hook, {intercept, create} from './hook';
+import {useType} from './hooks';
 
 /**
  * User: Oleg Kamlowski <oleg.kamlowski@thomann.de>
  * Date: 23.09.2019
  * Time: 21:14
  */
+export default factory;
 export {
-    elementFactory as factory,
-    hook as hook,
-    interceptHooks as intercept,
-    useClassName as useClassName,
-    useType as useType,
+    intercept,
+    create,
+    hook,
+    useType,
 };

@@ -4,7 +4,7 @@
  * @param accessed
  * @internal
  */
-export const capture = (target: any, accessed: Set<PropertyKey>): any => {
+export const capture = (target: object, accessed: Set<string>): any => {
     const captured = {};
     let released = false;
 
@@ -13,7 +13,7 @@ export const capture = (target: any, accessed: Set<PropertyKey>): any => {
      * @param target
      * @param prop
      */
-    const spy = (target: any, prop: PropertyKey) => {
+    const spy = (target: any, prop: string) => {
         !released && accessed.add(prop);
 
         return target[prop];
@@ -21,25 +21,22 @@ export const capture = (target: any, accessed: Set<PropertyKey>): any => {
 
     /**
      *
+     * @param value
      */
     const release = (value = true) => {
         released = value;
     };
 
-    for (const prop in target) {
-        if (!target.hasOwnProperty(prop)) {
-            continue;
-        }
-
-        define(captured, prop, {
+    for (const key of Object.keys(target)) {
+        define(captured, key, {
             enumerable: true,
-            get: () => spy(target, prop),
+            get: () => spy(target, key),
         });
     }
 
     return {
         captured,
-        release
+        release,
     };
 };
 
@@ -50,7 +47,7 @@ export const capture = (target: any, accessed: Set<PropertyKey>): any => {
  * @param attributes
  * @internal
  */
-export const define = (target: any, prop: PropertyKey, attributes: PropertyDescriptor) => (
+export const define = (target: any, prop: string, attributes: PropertyDescriptor) => (
     Object.defineProperty(target, prop, attributes)
 );
 
@@ -60,15 +57,18 @@ export const define = (target: any, prop: PropertyKey, attributes: PropertyDescr
  * @param props
  * @internal
  */
-export const sanitize = (keys, props) => {
+export const sanitize = (keys: Array<string>, props: object) => {
 
     /**
      *
-     * @param value
-     * @param rest
+     * @param acc
      * @param key
      */
-    const remove = ({[key]: value, ...rest}, key) => rest;
+    const remove = (acc, key) => {
+        delete acc[key];
+
+        return acc;
+    };
 
     return keys.reduce(remove, props);
 };
