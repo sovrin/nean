@@ -14,8 +14,8 @@ export default {
     input: 'src/index.ts',
     output: {
         name: 'nean',
-        dir: './dist',
         format: 'es',
+        file: pkg.main,
     },
     external: [
         ...peerDependencies,
