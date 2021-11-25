@@ -6,4 +6,4 @@
 /temp
 
 package-lock.json
-
+*.tgz

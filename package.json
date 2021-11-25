@@ -1,9 +1,10 @@
 {
   "name": "nean",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "small kit for porting css frameworks to reactjs",
-  "main": "dist/index.js",
-  "types": "dist/types/index.d.ts",
+  "main": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -cw",
@@ -11,7 +12,8 @@
     "coverage": "nyc npm test"
   },
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
   "repository": {
     "type": "git",
