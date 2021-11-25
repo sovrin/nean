@@ -1,6 +1,6 @@
 {
   "name": "nean",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "small kit for porting css frameworks to reactjs",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
@@ -44,7 +44,7 @@
     "typescript": "^4.3.4"
   },
   "peerDependencies": {
-    "react": "^16"
+    "react": ">=16"
   },
   "dependencies": {
     "@thomann/classnames": "^1.2.1"
