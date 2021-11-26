@@ -1,6 +1,6 @@
 {
   "name": "nean",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "small kit for porting css frameworks to reactjs",
   "main": "./dist/index.js",
   "exports": "./dist/index.js",
