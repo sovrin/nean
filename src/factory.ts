@@ -1,19 +1,8 @@
-import {createElement, forwardRef, ReactNode} from 'react';
+import {createElement, forwardRef} from 'react';
 import classNames from '@thomann/classnames';
 import {evaluate} from './hook';
 import {capture, sanitize} from './utils';
-
-type Props<T> = {
-    [P in keyof T]?: any
-} & {children?: ReactNode};
-
-export type Config<T> = {
-    type?: string,
-    className?: string,
-    style?: (props: Props<T>) => any,
-    extend?: (props: Props<T>) => any,
-    render?: (props: Props<T>) => any,
-}
+import {Factory} from './types';
 
 /**
  *
@@ -23,7 +12,15 @@ export type Config<T> = {
  * @param extend
  * @param render
  */
-const factory = <T>({type = null, className: baseClass = null, style = null, extend = null, render = ({children}) => (children)}: Config<T>) => {
+const factory: Factory = (
+    {
+        type = null,
+        className: baseClass = null,
+        style = null,
+        extend = null,
+        render = ({children}) => (children)
+    }
+) => {
 
     /**
      *

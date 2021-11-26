@@ -1,14 +1,5 @@
 import {define} from './utils';
-
-type Scope = typeof Scopes[number];
-
-const Scopes = ['type', 'props'] as const;
-
-type Hook = {
-    name: string,
-    scope: Scope,
-    hook: Function,
-}
+import {Hook, Scope} from './types';
 
 /**
  *
@@ -72,7 +63,7 @@ export const evaluate = (use: Hook[], context: any) => {
 
     const prepared = prepare(use);
 
-    for (const scope of Scopes) {
+    for (const scope of ['type', 'props']) {
         const hooks = prepared[scope];
 
         if (!hooks) {
