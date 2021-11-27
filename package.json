@@ -1,6 +1,6 @@
 {
   "name": "nean",
-  "version": "2.0.5",
+  "version": "2.1.0",
   "description": "js framework for neat and lean components",
   "main": "./dist/index.js",
   "exports": "./dist/index.js",
