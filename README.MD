@@ -9,7 +9,7 @@
 [![devDependencies][devDep-src]][devDep-href]
 [![License][license-src]][license-href]
 
-> small kit for porting css frameworks to reactjs
+> js framework for neat and lean components
 
 ## Installation
 ```bash
