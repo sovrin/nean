@@ -1,6 +1,6 @@
 import {ForwardRefExoticComponent, PropsWithChildren} from 'react';
 
-type TypeList = keyof JSX.IntrinsicElements;
+export type TypeList = keyof JSX.IntrinsicElements;
 
 export type Factory = <Props, Type extends TypeList = TypeList>(
     {type, className: baseClass, style, extend, render}: Config<Props, Type>,

@@ -23,7 +23,7 @@ const prepare = (hooks: Hook[]) => (
  * @param hooks
  * @param destructive
  */
-export const interceptHook = (hooks: Function[] = [], destructive = false) => {
+export const interceptHook = (hooks: Hook[] = [], destructive = false) => {
     const map = {};
 
     for (const hook of hooks) {

@@ -1,7 +1,8 @@
 import proxyquire from 'proxyquire';
-import {Config} from '../src/factory';
+import {Config} from '../src';
+import {TypeList} from '../src/types';
 
-type Mock = <T>(props: T, config: Config<T>) => (
+type Mock = <T>(props: T, config: Config<T, TypeList> ) => (
     (props) => boolean | string | JSX.Element
 )
 
