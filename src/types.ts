@@ -7,7 +7,7 @@ export type Factory = <Props, Type extends TypeList = TypeList>(
 ) => ForwardRefExoticComponent<JSX.IntrinsicElements[Type] & PropsWithChildren<Props>>;
 
 export type Config<Props, Type> = {
-    type: Type,
+    type?: Type,
     className?: string,
     style?: (props: PropsWithChildren<Props>) => any,
     extend?: (props: PropsWithChildren<Props>) => any,
