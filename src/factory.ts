@@ -1,6 +1,6 @@
 import {createElement, forwardRef} from 'react';
 import classNames from '@thomann/classnames';
-import {evaluate} from './hook';
+import {evaluate, aggregate} from './hook';
 import {capture, sanitize} from './utils';
 import {Factory} from './types';
 
@@ -28,15 +28,25 @@ const factory: Factory = (
      * @param ref
      */
     const build = (props, ref) => {
-        props = {...props, ref};
         let {className} = props;
 
         const keys: Set<string> = new Set([]);
         const {captured, release} = capture(props, keys);
+
         const classes = (style && style(captured)) || null;
         const extended = (extend && extend(captured)) || null;
-        const children = (render && render(captured)) || null;
+
+        const {use = null} = {
+            ...props,
+            ...extended,
+        };
+
+        const children = (render && render(captured, aggregate(use))) || null;
         release();
+
+        if (use) {
+            keys.add('use');
+        }
 
         if (!type) {
             return children;
@@ -47,15 +57,6 @@ const factory: Factory = (
             classes,
             className,
         );
-
-        const {use = null} = {
-            ...props,
-            ...extended,
-        };
-
-        if (use) {
-            keys.add('use');
-        }
 
         const sanitized = sanitize([...keys], {
             ...props,

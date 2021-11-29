@@ -91,6 +91,22 @@ export const evaluate = (use: Hook[], context: any) => {
 
 /**
  *
+ * @param use
+ */
+export const aggregate = (use: Hook[]) => {
+    if (!use) {
+        return {};
+    }
+
+    return use.reduce((acc, {name, hook}) => {
+        acc[name] = hook;
+
+        return acc;
+    }, {});
+};
+
+/**
+ *
  * @param scope
  * @internal
  */

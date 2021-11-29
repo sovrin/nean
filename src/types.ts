@@ -11,7 +11,7 @@ export type Config<Props, Type> = {
     className?: string,
     style?: (props: PropsWithChildren<Props>) => any,
     extend?: (props: PropsWithChildren<Props>) => any,
-    render?: (props: PropsWithChildren<Props>) => any,
+    render?: (props: PropsWithChildren<Props>, hooks?: {[key: string]: Function}) => any,
 }
 
 export type Scope = 'props' | 'type'
