@@ -309,7 +309,41 @@ describe('nean', () => {
                 isNullified(['use']);
                 is('foo', 'bar');
                 is('bar', undefined);
-            })
+            });
+
+            it('should intercept custom hook in render as second parameter', () => {
+                const useFoo = (value) => createHook('foo', (current) => {
+                    return value === current;
+                });
+
+                const useBar = (foo) => createHook('bar', ({bar} = {bar: null}) => ({
+                    foo,
+                    bar,
+                }));
+
+                const props = {
+                    use: [
+                        useFoo('foo'),
+                        useBar('bar'),
+                    ],
+                };
+                const element = render(props, {
+                    type: 'div',
+                    render: ({use}, {foo, bar}) => {
+                        assert(foo('foo') === true);
+                        assert(bar().foo === 'bar');
+                        assert(bar().bar === null);
+
+                        return null;
+                    },
+                });
+
+                const {typeEquals, isNullified, is} = test(element);
+                typeEquals('div');
+                isNullified(['use']);
+                is('foo', 'bar');
+                is('bar', undefined);
+            });
 
             it('should use hook value', () => {
                 const props = {
