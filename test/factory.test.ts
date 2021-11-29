@@ -26,8 +26,8 @@ describe('nean', () => {
             it('should return children', () => {
                 const element = render({}, {
                     render: () => {
-                        return 'foo'
-                    }
+                        return 'foo';
+                    },
                 });
 
                 // @ts-ignore
@@ -145,7 +145,7 @@ describe('nean', () => {
                     type: 'div',
                     extend: ({foo, bar}) => ({
                         'foobar': foo,
-                        'fizz': 'buzz'
+                        'fizz': 'buzz',
                     }),
                 });
 
@@ -257,8 +257,8 @@ describe('nean', () => {
             it('should use custom hook', () => {
                 const props = {
                     use: [
-                        createHook('foo', () => {})
-                    ]
+                        createHook('foo', () => {}),
+                    ],
                 };
                 const element = render(props, {
                     type: 'div',
@@ -288,7 +288,7 @@ describe('nean', () => {
                 const props = {
                     use: [
                         useFoo('foo'),
-                        useBar('bar')
+                        useBar('bar'),
                     ],
                 };
                 const element = render(props, {
@@ -297,7 +297,7 @@ describe('nean', () => {
                         const foo = interceptHook(use)('foo');
                         const bar = interceptHook(use)('bar');
                         assert(foo('foo') === true);
-                        assert(bar().foo === "bar");
+                        assert(bar().foo === 'bar');
                         assert(bar().bar === null);
 
                         return null;
@@ -402,7 +402,7 @@ describe('nean', () => {
                         assert(use.length === 0);
 
                         const anotherType = interceptHook(use, true)('type');
-                        assert(anotherType() === undefined)
+                        assert(anotherType() === undefined);
 
                         return type();
                     },
