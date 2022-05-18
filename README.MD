@@ -6,7 +6,6 @@
 [![coverage][coverage-src]][coverage-href]
 [![vulnerabilities][vulnerabilities-src]][vulnerabilities-href]
 [![dependencies][dep-src]][dep-href]
-[![devDependencies][devDep-src]][devDep-href]
 [![License][license-src]][license-href]
 
 > js framework for neat and lean components
@@ -21,8 +20,8 @@ $ npm i nean
 import react, {Fragment} from 'react';
 import nean from 'nean';
 
-const Button = nean({
-    type: 'button',
+const Button = nean()({
+    as: 'button',
     className: 'btn',
     style: ({rounded, primary}) => ({
         'btn--rounded': rounded,
@@ -61,29 +60,28 @@ const Button = nean({
 - <a href="#ctor"><code><b>nean()</b></code></a>
 - <a href="#interceptHook"><code>interceptHook()</code></a>
 - <a href="#createHook"><code>createHook()</code></a>
-- <a href="#useType"><code>useType()</code></a>
 
 <a name="library"></a>
 ### Library
 
 <a name="ctor"></a>
-### `nean(config: Factory)`
+### `nean(formatter: Formatter)`
 #### `Factory`
-|             | type      | default      | description
-| :---------- | :---------| :------------| :----------
-| `type`      | string    |              | type of element e.g. `span`, `div`, `button`
-| `className` | string?   |              | base className of the element
-| `style`     | Function? | `props`      | provides an object with all consumed props for translation
-| `extend`    | Function? | `props`      | allows extending or aliasing of props
-| `render`    | Function? | `{children}` | overwrite of default render function
+|             | type      | default               | description                                                |
+|:------------|:----------|:----------------------|:-----------------------------------------------------------|
+| `as`        | string?   |                       | type of element e.g. `span`, `div`, `button`               |
+| `className` | string?   |                       | base className of the element                              |
+| `style`     | Function? | `props`               | provides an object with all consumed props for translation |
+| `extend`    | Function? | `props`               | allows extending or aliasing of props                      |
+| `render`    | Function? | `{children}, [hooks]` | overwrite of default render function, array of hooks       |
 
-##### `type`
+##### `as`
 Pass type `button` to create a plain button component.
 ```javascript
 import nean from 'nean';
 
-const Button = nean({
-    type: 'button',
+const Button = nean()({
+    as: 'button',
 });
 ```
 
@@ -94,8 +92,8 @@ By adding `className`, the component receives a base className.
 ```javascript
 import nean from 'nean';
 
-const Button = nean({
-    type: 'button',
+const Button = nean()({
+    as: 'button',
     className: 'btn',
 });
 ```
@@ -104,13 +102,12 @@ const Button = nean({
 
 ##### `style(props)`
 To bind props to css classNames of the chosen framework, return an object with the new classNames with props as values. 
-`style` is powered by the [@thomann/classnames](https://github.com/thomn/classnames) library 
-and recursively evaluates every property/value by its truthiness and keeps its key.
+`style` recursively evaluates every property/value by its truthiness and keeps its key.
 ```javascript
 import nean from 'nean';
 
-const Button = nean({
-    type: 'button',
+const Button = nean()({
+    as: 'button',
     style: (({primary}) => ({
         'btn-primary': primary
     })),
@@ -125,8 +122,8 @@ These can be set via `extend`. This function allows the extension of the origina
 ```javascript
 import nean from 'nean';
 
-const Button = nean({
-    type: 'button',
+const Button = nean()({
+    as: 'button',
     extend: (({badges}) => ({
         'data-badges': badges
     })),
@@ -142,8 +139,8 @@ This allows to wrap your components `children` with other components.
 import React from 'react';
 import nean from 'nean';
 
-const Link = nean({
-    type: 'a',
+const Link = nean()({
+    as: 'a',
     render: (({children}) => (
         <Button>
             {children}
@@ -173,7 +170,7 @@ import React from 'react';
 import nean, {interceptHook, createHook} from 'nean';
 
 // definition
-const Button = nean({
+const Button = nean()({
     render: ({children, use}) => {
         const icon = interceptHook(use)('icon');
 
@@ -205,25 +202,6 @@ const App = () => (
 )
 ```
 
-***
-
-<a name="useType"></a>
-### `useType(type)`
-It's possible to overwrite the component type on runtime via the custom `useType` hook. 
-
-* `type` (type or tag name of the element)
-
-```javascript
-import React from 'react';
-import nean, {useType} from 'nean';
-
-const App = () => (
-    <Button use={[useType('span')]}>
-        hello world, I am a span
-    </Button>
-);
-```
-
 ## Licence
 MIT License, see [LICENSE](./LICENSE)
 
@@ -237,9 +215,7 @@ MIT License, see [LICENSE](./LICENSE)
 [coverage-href]: https://coveralls.io/github/sovrin/nean?branch=master
 [vulnerabilities-src]: https://snyk.io/test/github/sovrin/nean/badge.svg
 [vulnerabilities-href]: https://snyk.io/test/github/sovrin/nean
-[dep-src]: https://badgen.net/david/dep/sovrin/nean
-[dep-href]: https://badgen.net/david/dep/sovrin/nean
-[devDep-src]: https://badgen.net/david/dev/sovrin/nean
-[devDep-href]: https://badgen.net/david/dev/sovrin/nean
+[dep-src]: https://img.shields.io/librariesio/release/npm/nean
+[dep-href]: https://img.shields.io/librariesio/release/npm/nean
 [license-src]: https://badgen.net/github/license/sovrin/nean
 [license-href]: LICENSE
