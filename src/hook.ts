@@ -1,22 +1,5 @@
 import {define} from './utils';
-import {Hook, Scope} from './types';
-
-/**
- *
- * @param hooks
- * @internal
- */
-const prepare = (hooks: Hook[]) => (
-    hooks.reduce((acc, {scope, hook}) => {
-        if (!acc[scope]) {
-            acc[scope] = [];
-        }
-
-        acc[scope].push((args) => hook(args));
-
-        return acc;
-    }, {})
-);
+import {Hook} from './types';
 
 /**
  *
@@ -61,27 +44,15 @@ export const evaluate = (use: Hook[], context: any) => {
         return context;
     }
 
-    const prepared = prepare(use);
+    for (const {hook} of use) {
+        const result = hook(context);
 
-    for (const scope of ['type', 'props']) {
-        const hooks = prepared[scope];
-
-        if (!hooks) {
-            continue;
-        }
-
-        for (const hook of hooks) {
-            const result = hook(context[scope]);
-
-            if (scope === 'type' && typeof result === 'string') {
-                context[scope] = result;
-            } else if (scope === 'props' && typeof result === 'object') {
-                for (const [key, value] of Object.entries(result)) {
-                    define(context[scope], key, {
-                        enumerable: true,
-                        value,
-                    });
-                }
+        if (typeof result === 'object') {
+            for (const key of Object.keys(result)) {
+                define(context, key, {
+                    enumerable: true,
+                    value: result[key],
+                });
             }
         }
     }
@@ -93,7 +64,7 @@ export const evaluate = (use: Hook[], context: any) => {
  *
  * @param use
  */
-export const aggregate = (use: Hook[]) => {
+export const aggregate = (use: Hook[]): any => {
     if (!use) {
         return {};
     }
@@ -107,16 +78,11 @@ export const aggregate = (use: Hook[]) => {
 
 /**
  *
- * @param scope
  * @internal
+ * @param name
+ * @param hook
  */
-export const create = (scope: Scope) => (name: string, hook: Function) => ({
+export default (name: string, hook: Function) => ({
     name,
-    scope,
     hook,
 });
-
-/**
- *
- */
-export default create('props');

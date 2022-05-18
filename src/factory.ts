@@ -1,42 +1,37 @@
 import {createElement, forwardRef} from 'react';
-import classNames from '@thomann/classnames';
-import {evaluate, aggregate} from './hook';
+import formatter from './formatter';
 import {capture, sanitize} from './utils';
-import {Factory} from './types';
+import {aggregate, evaluate} from './hook';
+import type {nean, FrameworkProps} from './types';
 
 /**
  *
- * @param type
- * @param baseClass
- * @param style
- * @param extend
- * @param render
+ * @param format
  */
-const factory: Factory = (
+const factory: nean = (format = formatter) => (
     {
-        type = null,
-        className: baseClass = null,
-        style = null,
-        extend = null,
+        as = undefined,
+        className = undefined,
+        style = undefined,
+        extend = undefined,
         render = ({children}) => (children)
     }
 ) => {
-
     /**
      *
      * @param props
      * @param ref
      */
     const build = (props, ref) => {
-        let {className} = props;
-
-        const keys: Set<string> = new Set([]);
-        const {captured, release} = capture(props, keys);
-
+        const {captured, release, keys} = capture(props);
         const classes = (style && style(captured)) || null;
         const extended = (extend && extend(captured)) || null;
 
-        const {use = null} = {
+        const {
+            use = undefined,
+            as: propAs = undefined,
+            className: propClassName = undefined,
+        }: FrameworkProps = {
             ...props,
             ...extended,
         };
@@ -48,14 +43,16 @@ const factory: Factory = (
             keys.add('use');
         }
 
-        if (!type) {
+        if (!as && !propAs) {
             return children;
+        } else if (propAs) {
+            keys.add('as');
         }
 
-        className = classNames(
-            baseClass,
-            classes,
+        className = (className || classes || propClassName) && format(
             className,
+            classes,
+            propClassName
         );
 
         const sanitized = sanitize([...keys], {
@@ -70,11 +67,11 @@ const factory: Factory = (
             ref,
         };
 
-        const result = evaluate(use, {type, props});
+        const result = evaluate(use, props);
 
         return createElement(
-            result.type,
-            result.props
+            propAs || as,
+            result,
         );
     };
 

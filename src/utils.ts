@@ -1,10 +1,10 @@
 /**
  *
  * @param target
- * @param accessed
  * @internal
  */
-export const capture = (target: object, accessed: Set<string>): any => {
+export const capture = (target: object): { keys: Set<string>, captured: any, release: () => void } => {
+    const keys: Set<string> = new Set([]);
     const captured = {};
     let released = false;
 
@@ -14,17 +14,16 @@ export const capture = (target: object, accessed: Set<string>): any => {
      * @param prop
      */
     const spy = (target: any, prop: string) => {
-        !released && accessed.add(prop);
+        !released && keys.add(prop);
 
         return target[prop];
     };
 
     /**
      *
-     * @param value
      */
-    const release = (value = true) => {
-        released = value;
+    const release = () => {
+        released = true;
     };
 
     for (const key of Object.keys(target)) {
@@ -35,6 +34,7 @@ export const capture = (target: object, accessed: Set<string>): any => {
     }
 
     return {
+        keys,
         captured,
         release,
     };
@@ -58,7 +58,6 @@ export const define = (target: any, prop: string, attributes: PropertyDescriptor
  * @internal
  */
 export const sanitize = (keys: Array<string>, props: object) => {
-
     /**
      *
      * @param acc
