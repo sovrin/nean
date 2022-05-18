@@ -1,7 +1,7 @@
 {
   "name": "nean",
-  "main": "./dist/index.js",
-  "version": "3.0.0",
+  "main": "dist/index.js",
+  "version": "3.0.1",
   "description": "js framework for neat and lean components",
   "exports": "./dist/index.js",
   "types": "./types/index.d.ts",
@@ -12,8 +12,8 @@
     "coverage": "nyc npm test"
   },
   "files": [
-    "./dist/index.js",
-    "./types"
+    "dist/index.js",
+    "types"
   ],
   "repository": {
     "type": "git",
