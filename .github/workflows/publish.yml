@@ -1,4 +1,4 @@
-name: release
+name: publish
 
 on:
   push:
@@ -9,19 +9,8 @@ env:
   CI: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 12.x
-        uses: actions/setup-node@v1
-        with:
-          node-version: 12.x
-      - run: npm i
-      - run: npm run build
-
   publish:
-    needs: build
+    environment: production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,6 +19,8 @@ jobs:
         with:
           node-version: 12.x
           registry-url: https://registry.npmjs.org/
+      - run: npm i
+      - run: npm run build
       - run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
