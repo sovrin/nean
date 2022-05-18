@@ -1,10 +1,9 @@
 import proxyquire from 'proxyquire';
 import {Config} from '../src';
-import {TypeList} from '../src/types';
 
-type Mock = <T>(props: T, config: Config<T, TypeList> ) => (
+type Mock = (formatter?: Function) => <T>(props: T, config: Config<T, any>) => (
     (props) => boolean | string | JSX.Element
-)
+);
 
 /**
  * User: Oleg Kamlowski <oleg.kamlowski@thomann.de>
@@ -22,7 +21,7 @@ export default (): Mock => {
         '@noCallThru': true,
     });
 
-    return (props, config) => {
-        return factory(config).render(props);
+    return (formatter = undefined) => (props, config) => {
+        return factory(formatter)(config).render(props);
     };
 }

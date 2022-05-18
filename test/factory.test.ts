@@ -1,8 +1,10 @@
 import mock from './mock';
 import assert from 'assert';
-import {describe} from 'mocha';
-import {interceptHook, createHook, useType} from '../src';
+import {interceptHook, createHook} from '../src';
 
+/**
+ *
+ */
 const tester = () => ({type, props}: any) => ({
     classNameEquals: (value) => assert(value === props.className),
     typeEquals: (value) => assert(type === value),
@@ -12,11 +14,35 @@ const tester = () => ({type, props}: any) => ({
 });
 
 describe('nean', () => {
-    const render = mock();
+    const nean = mock();
+    const render = nean();
     const test = tester();
 
     describe('factory', () => {
-        describe('type', () => {
+        describe('formatter', () => {
+            it('should use custom formatter', () => {
+                const render = nean((className) => (
+                    [className, 'custom'].join(' ')
+                ));
+                const props = {
+                    foo: true,
+                    bar: false,
+                };
+                const element = render(props, {
+                    as: 'div',
+                    className: 'test',
+                    style: ({foo, bar}) => ({
+                        foo,
+                        bar,
+                    }),
+                });
+
+                const {classNameEquals} = test(element);
+                classNameEquals('test custom');
+            });
+        });
+
+        describe('as', () => {
             it('should return nothing', () => {
                 const element = render({}, {});
 
@@ -36,7 +62,7 @@ describe('nean', () => {
 
             it('should return div', () => {
                 const element = render({}, {
-                    type: 'div',
+                    as: 'div',
                 });
 
                 const {typeEquals} = test(element);
@@ -50,7 +76,7 @@ describe('nean', () => {
                     primary: true,
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     className: 'test',
                     style: ({primary}) => ({
                         primary,
@@ -68,7 +94,7 @@ describe('nean', () => {
                     secondary: true,
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     className: 'test',
                     style: ({primary}) => ({
                         primary,
@@ -85,7 +111,7 @@ describe('nean', () => {
                     primary: true,
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     className: 'test',
                     // @ts-ignore
                     style: ({primary, secondary}) => ({
@@ -99,13 +125,24 @@ describe('nean', () => {
                 isNullified(['primary', 'secondary']);
             });
 
+            it('should have no className', () => {
+                const props = {};
+                const element = render(props, {
+                    as: 'div',
+                });
+
+                const {classNameEquals, isNullified} = test(element);
+                isNullified(['className']);
+                classNameEquals(undefined);
+            });
+
             it('should add aliased classNames and remove all used props while being aliased', () => {
                 const props = {
                     primary: true,
                     secondary: true,
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     className: 'test',
                     style: ({primary, secondary}) => ({
                         foo: primary,
@@ -117,6 +154,33 @@ describe('nean', () => {
                 classNameEquals('test foo bar');
                 isNullified(['primary', 'secondary']);
             });
+
+            it('should not have duplicate classNames', () => {
+                const props = {
+                    primary: true,
+                    secondary: true,
+                };
+                const elementA = render(props, {
+                    as: 'div',
+                    className: 'test',
+                    style: ({primary, secondary}) => ({
+                        foo: primary,
+                        bar: secondary,
+                    }),
+                });
+
+                const elementB = render(props, {
+                    as: 'div',
+                    className: 'test',
+                    style: ({primary, secondary}) => ({
+                        foo: primary,
+                        bar: secondary,
+                    }),
+                });
+
+                test(elementA).classNameEquals('test foo bar');
+                test(elementB).classNameEquals('test foo bar');
+            })
         });
 
         describe('extend', () => {
@@ -125,7 +189,7 @@ describe('nean', () => {
                     foo: 'bar',
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     extend: ({foo}) => ({
                         'foobar': foo,
                     }),
@@ -142,7 +206,7 @@ describe('nean', () => {
                     bar: 'foo',
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     extend: ({foo, bar}) => ({
                         'foobar': foo,
                         'fizz': 'buzz',
@@ -161,7 +225,7 @@ describe('nean', () => {
                     bar: 'foo',
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     extend: ({foo}) => ({
                         'foobar': foo,
                     }),
@@ -179,7 +243,7 @@ describe('nean', () => {
                     foo: 'bar',
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     render: ({children, foo}) => (foo),
                 });
 
@@ -195,7 +259,7 @@ describe('nean', () => {
                     children: 'children',
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     render: ({foo}) => (foo),
                 });
 
@@ -206,14 +270,21 @@ describe('nean', () => {
         });
 
         describe('use', () => {
-            it('should overwrite type to ul', () => {
+            const useFoo = (value) => createHook('foo', (current) => {
+                return value === current;
+            });
+
+            const useBar = (foo) => createHook('bar', ({bar} = {bar: null}) => ({
+                foo,
+                bar,
+            }));
+
+            it('should overwrite type to ul via props', () => {
                 const props = {
-                    use: [
-                        useType('ul'),
-                    ],
+                    as: 'ul'
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                 });
 
                 const {typeEquals, isNullified} = test(element);
@@ -224,11 +295,9 @@ describe('nean', () => {
             it('should overwrite type to while being extended', () => {
                 const props = {};
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     extend: () => ({
-                        use: [
-                            useType('ul'),
-                        ],
+                        as: 'ul',
                     }),
                 });
 
@@ -240,7 +309,7 @@ describe('nean', () => {
             it('should do nothing', () => {
                 const props = {};
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     render: () => {
                         const unknown = interceptHook()('unknown');
                         assert(unknown() === undefined);
@@ -257,13 +326,13 @@ describe('nean', () => {
             it('should use custom hook', () => {
                 const props = {
                     use: [
-                        createHook('foo', () => {}),
+                        useFoo('foo'),
                     ],
                 };
                 const element = render(props, {
-                    type: 'div',
-                    render: () => {
-                        const unknown = interceptHook()('unknown');
+                    as: 'div',
+                    render: ({use}) => {
+                        const unknown = interceptHook(use)('unknown');
                         assert(unknown() === undefined);
 
                         return null;
@@ -276,15 +345,6 @@ describe('nean', () => {
             });
 
             it('should intercept custom hook', () => {
-                const useFoo = (value) => createHook('foo', (current) => {
-                    return value === current;
-                });
-
-                const useBar = (foo) => createHook('bar', ({bar} = {bar: null}) => ({
-                    foo,
-                    bar,
-                }));
-
                 const props = {
                     use: [
                         useFoo('foo'),
@@ -292,7 +352,7 @@ describe('nean', () => {
                     ],
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     render: ({use}) => {
                         const foo = interceptHook(use)('foo');
                         const bar = interceptHook(use)('bar');
@@ -328,7 +388,7 @@ describe('nean', () => {
                     ],
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     render: ({use}, {foo, bar}) => {
                         assert(foo('foo') === true);
                         assert(bar().foo === 'bar');
@@ -345,38 +405,15 @@ describe('nean', () => {
                 is('bar', undefined);
             });
 
-            it('should use hook value', () => {
-                const props = {
-                    use: [
-                        useType('ul'),
-                    ],
-                };
-                const element = render(props, {
-                    type: 'div',
-                    render: ({use}) => {
-                        const type = interceptHook(use)('type');
-                        assert(use.length === 1);
-
-                        return type();
-                    },
-                });
-
-                const {typeEquals, isNullified, is} = test(element);
-                typeEquals('ul');
-                isNullified(['use']);
-                is('children', 'ul');
-            });
-
             it('should ignore hook value', () => {
                 const props = {
-                    use: [
-                        useType('ul'),
-                    ],
+                    as: 'ul',
+                    use: []
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     render: ({use}) => {
-                        assert(use.length === 1);
+                        assert(use.length === 0);
 
                         return 'li';
                     },
@@ -391,27 +428,47 @@ describe('nean', () => {
             it('should shift hook from hook stack', () => {
                 const props = {
                     use: [
-                        useType('ul'),
-                    ],
+                        createHook('foo', (value) => value),
+                    ]
                 };
                 const element = render(props, {
-                    type: 'div',
+                    as: 'div',
                     render: ({use}) => {
-                        const type = interceptHook(use, true)('type');
+                        const foo = interceptHook(use, true)('foo');
 
                         assert(use.length === 0);
 
-                        const anotherType = interceptHook(use, true)('type');
+                        const anotherType = interceptHook(use, true)('foo');
                         assert(anotherType() === undefined);
 
-                        return type();
+                        return foo('bar');
                     },
                 });
 
                 const {typeEquals, isNullified, is} = test(element);
                 typeEquals('div');
                 isNullified(['use']);
-                is('children', 'ul');
+                is('children', 'bar');
+            });
+
+            it('should expose hook in render', () => {
+                const props = {
+                    use: [
+                        createHook('foo', () => 'foo'),
+                        createHook('bar', () => 'bar')
+                    ]
+                };
+                const element = render(props, {
+                    as: 'div',
+                    render: ({}, {foo, bar}) => {
+                        return foo() + bar();
+                    },
+                });
+
+                const {typeEquals, isNullified, is} = test(element);
+                typeEquals('div');
+                isNullified(['use']);
+                is('children', 'foobar');
             });
         });
     });
@@ -429,13 +486,11 @@ describe('nean', () => {
                 buz: '2',
                 foo: 'foo',
                 bar: 'bar',
-                use: [
-                    useType('ul'),
-                ],
+                as: 'ul',
             };
 
             const element = render(props, {
-                type: 'div',
+                as: 'div',
                 className: 'menu',
                 style: ({primary, link, size}) => ({
                     [`btn-${size}`]: size,
