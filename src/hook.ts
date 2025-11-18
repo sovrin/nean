@@ -1,25 +1,20 @@
-import {define} from './utils';
-import {Hook} from './types';
+import { define } from "./utils/object.utils";
 
-/**
- *
- * @param hooks
- * @param destructive
- */
+export type Hook = {
+    name: string;
+    hook: Function;
+};
+
 export const interceptHook = (hooks: Hook[] = [], destructive = false) => {
-    const map = {};
+    const map: Record<string, Hook> = {};
 
     for (const hook of hooks) {
-        const {name} = hook;
+        const { name } = hook;
         map[name] = hook;
     }
 
-    /**
-     *
-     */
-    return (name) => {
+    return (name: string) => {
         const target = map[name];
-
         if (!target) {
             return () => undefined;
         }
@@ -33,21 +28,15 @@ export const interceptHook = (hooks: Hook[] = [], destructive = false) => {
     };
 };
 
-/**
- *
- * @param use
- * @param context
- * @internal
- */
 export const evaluate = (use: Hook[], context: any) => {
     if (!use) {
         return context;
     }
 
-    for (const {hook} of use) {
+    for (const { hook } of use) {
         const result = hook(context);
 
-        if (typeof result === 'object') {
+        if (typeof result === "object") {
             for (const key of Object.keys(result)) {
                 define(context, key, {
                     enumerable: true,
@@ -60,29 +49,22 @@ export const evaluate = (use: Hook[], context: any) => {
     return context;
 };
 
-/**
- *
- * @param use
- */
 export const aggregate = (use: Hook[]): any => {
     if (!use) {
         return {};
     }
 
-    return use.reduce((acc, {name, hook}) => {
-        acc[name] = hook;
+    return use.reduce(
+        (acc, { name, hook }) => {
+            acc[name] = hook;
 
-        return acc;
-    }, {});
+            return acc;
+        },
+        {} as Record<string, Function>,
+    );
 };
 
-/**
- *
- * @internal
- * @param name
- * @param hook
- */
-export default (name: string, hook: Function) => ({
+export const createHook = (name: string, hook: Function) => ({
     name,
     hook,
 });

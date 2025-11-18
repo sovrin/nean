@@ -7,7 +7,6 @@
   ],
   "exclude": [
     "dist",
-    "test",
     "**/*.d.ts"
   ],
   "reporter": [

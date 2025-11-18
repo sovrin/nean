@@ -15,6 +15,10 @@
 $ npm i nean
 ```
 
+## About
+The purpose of this library is to reduce the boilerplate code needed to create react components for css-only frameworks.
+Focusing only on the necessary bits.
+
 ## Usage
 ```js
 import react, {Fragment} from 'react';
@@ -65,7 +69,7 @@ const Button = nean()({
 ### Library
 
 <a name="ctor"></a>
-### `nean(formatter: Formatter)`
+### `nean(resolver: Resolver)`
 #### `Factory`
 |             | type      | default               | description                                                |
 |:------------|:----------|:----------------------|:-----------------------------------------------------------|

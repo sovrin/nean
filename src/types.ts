@@ -1,44 +1,48 @@
-import {ForwardRefExoticComponent, PropsWithChildren} from 'react';
+import type {
+    ForwardRefExoticComponent,
+    JSX,
+    PropsWithChildren,
+    ReactElement,
+} from "react";
+import type { Resolver } from "./resolver";
+import type { Hook } from "./hook";
 
-export type nean = (formatter?: Formatter) => Factory;
+export type nean = (resolver?: Resolver) => Factory;
 
-export type Formatter = (...context: (string | boolean | number | string [] | object | Function)[]) => string;
-
-export type Factory = <P, T extends ElementList = ElementList>(
-    {
-        as,
-        className,
-        style,
-        extend,
-        render,
-    }: Config<P, T>,
-) => ForwardRefExoticComponent<Props<P, T>>;
-
-export type Config<P, T> = {
-    as?: T,
-    className?: string,
-    style?: (props: P) => any,
-    extend?: (props: PropsWithChildren<FrameworkProps> & P) => any,
-    render?: (props: PropsWithChildren<FrameworkProps> & P, hooks?: { [key: string]: Function }) => any,
+export type Config<P, T extends ElementList> = {
+    as?: T;
+    className?: string;
+    style?: (props: ComponentProps<P, T>) => any;
+    extend?: (props: ComponentProps<P, T>) => any;
+    render?: (
+        props: ComponentProps<P, T>,
+        hooks?: { [key: string]: Function },
+    ) => ReactElement | null;
 };
 
-type Props<P, T extends ElementList> =
-    ElementProps<T> & P
-;
+export type Factory = <P, T extends ElementList>(
+    config: Config<P, T>,
+) => ForwardRefExoticComponent<Prettify<ComponentProps<P, T>>>;
+
+type ComponentProps<P, T extends ElementList> = PropsWithChildren<
+    P & ConsumerProps & ElementProps<T>
+>;
 
 type ElementList = keyof JSX.IntrinsicElements;
 
-type ElementProps<T extends ElementList> =
-    JSX.IntrinsicElements[T]
-;
+type ElementProps<T extends ElementList> = JSX.IntrinsicElements[T];
+
+export type ConsumerProps = {
+    className?: string;
+    use?: Hook[];
+};
 
 export type FrameworkProps = {
-    as?: ElementList,
-    className?: string,
-    use?: Hook[],
+    as?: ElementList;
+    className?: string;
+    use?: Hook[];
 };
 
-export type Hook = {
-    name: string,
-    hook: Function,
-};
+export type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};

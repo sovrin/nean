@@ -1,20 +1,19 @@
 {
-  "compilerOptions": {
-    "module": "CommonJS",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "ES6",
-    "moduleResolution": "Node",
-    "sourceMap": true,
-    "outDir": "./",
-    "baseUrl": "./src",
-    "declaration": true,
-  },
-  "exclude": [
-    "test/**"
-  ],
-  "include": [
-    "src/**/*"
-  ]
+    "compilerOptions": {
+        "strict": true,
+        "module": "CommonJS",
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "target": "ES6",
+        "moduleResolution": "Node",
+        "sourceMap": true,
+        "outDir": "./",
+        "baseUrl": "./src",
+        "declaration": true,
+        "jsx": "react"
+    },
+    "exclude": ["src/tests/**"],
+    "include": ["src/**/*"]
 }
