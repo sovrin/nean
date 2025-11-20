@@ -10,122 +10,106 @@ import { sanitize } from "./utils/array.utils";
 import { capture } from "./utils/proxy.utils";
 import { aggregate, evaluate, type Hook } from "./hook";
 
-export type nean = (resolver?: Resolver) => Factory;
+export type CreateFactory = (resolver?: Resolver) => ComponentFactory;
 
-export type ElementList = keyof JSX.IntrinsicElements;
-type ElementProps<T extends ElementList> = JSX.IntrinsicElements[T];
+export type IntrinsicElement = keyof JSX.IntrinsicElements;
+type IntrinsicProps<T extends IntrinsicElement> = JSX.IntrinsicElements[T];
 
-export type FrameworkProps<T extends ElementList> = {
+export type BaseComponentProps<T extends IntrinsicElement> = {
     as?: T;
     use?: Hook[];
     className?: string;
     ref?: Ref<T>;
 };
 
-type ComponentProps<
+type MergedProps<
     Props extends object,
-    Type extends ElementList,
-> = PropsWithChildren<Props & FrameworkProps<Type> & ElementProps<Type>>;
+    Element extends IntrinsicElement,
+> = PropsWithChildren<
+    Props & BaseComponentProps<Element> & IntrinsicProps<Element>
+>;
 
-export type Config<Props extends object, Type extends ElementList> = {
-    as?: Type;
+export type ComponentConfig<
+    Props extends object,
+    Element extends IntrinsicElement,
+> = {
+    as?: Element;
     className?: string;
-    style?: (props: ComponentProps<Props, Type>) => any;
-    extend?: (props: ComponentProps<Props, Type>) => any;
+    style?: (props: MergedProps<Props, Element>) => any;
+    extend?: (props: MergedProps<Props, Element>) => any;
     render?: (
-        props: ComponentProps<Props, Type>,
-        hooks?: { [key: string]: Function },
+        props: MergedProps<Props, Element>,
+        hooks?: Record<string, Function>,
     ) => ReactNode;
 };
 
-export type Factory = <
+export type ComponentFactory = <
     Props extends object = never,
-    Type extends ElementList = never,
+    Element extends IntrinsicElement = never,
 >(
-    config: Config<Props, Type>,
-) => Renderer<Props, Type>;
+    config: ComponentConfig<Props, Element>,
+) => Component<Props, Element>;
 
-type Renderer<Props extends object, Type extends ElementList = never> = {
-    <Generic extends ElementList = Type>(
-        props: [Generic] extends [never]
-            ? FrameworkProps<never> & Props
-            : FrameworkProps<Generic> & ElementProps<Generic> & Props,
+type Component<
+    Props extends object,
+    Element extends IntrinsicElement = never,
+> = {
+    <T extends IntrinsicElement = Element>(
+        props: [T] extends [never]
+            ? BaseComponentProps<never> & Props
+            : BaseComponentProps<T> & IntrinsicProps<T> & Props,
     ): ReactNode;
 
-    <Fallback extends ElementList = Type>(
-        props: ElementProps<Fallback> & Props,
+    <T extends IntrinsicElement = Element>(
+        props: IntrinsicProps<T> & BaseComponentProps<T> & Props,
     ): ReactNode;
 };
 
-const closure: nean = (resolveClassNames = resolver) => {
+const createFactory: CreateFactory = (resolveClassNames = resolver) => {
     return ({
-        as,
+        as: defaultElement,
         className: baseClassName,
         style,
         extend,
         render = ({ children }) => children,
     }) => {
-        return (props: FrameworkProps<never>) => {
+        return (props: BaseComponentProps<never>) => {
             const { captured, release, keys } = capture(props);
 
-            const classes = style ? style(captured) : null;
-            const extended = extend ? extend(captured) : null;
+            const styleClasses = style?.(captured) ?? null;
+            const extensions = extend?.(captured) ?? null;
 
-            const mergedProps: FrameworkProps<never> = {
-                ...props,
-                ...extended,
-            };
+            const mergedProps = { ...props, ...extensions };
+            const { use, as, className, ref } =
+                mergedProps as BaseComponentProps<never>;
 
-            const {
-                use,
-                as: propAs,
-                className: propClassName,
-                ref,
-            }: FrameworkProps<never> = mergedProps;
-
-            const children =
-                (render && render(captured, aggregate(use))) || null;
+            const children = render?.(captured, aggregate(use)) ?? null;
 
             release();
 
-            if (use) {
-                keys.add("use");
-            }
+            if (use) keys.add("use");
 
-            const finalAs = propAs || as;
-            if (!finalAs) {
-                return children;
-            }
+            const element = as || defaultElement;
+            if (!element) return children;
 
-            if (propAs) {
-                keys.add("as");
-            }
+            if (as) keys.add("as");
 
             const resolvedClassName =
-                baseClassName || classes || propClassName
-                    ? resolveClassNames(baseClassName, classes, propClassName)
+                baseClassName || styleClasses || className
+                    ? resolveClassNames(baseClassName, styleClasses, className)
                     : undefined;
 
-            const sanitized = sanitize([...keys], {
-                ...props,
-                ...extended,
-            });
-
+            const sanitizedProps = sanitize([...keys], mergedProps);
             const evaluatedProps = evaluate(use, {
-                ...sanitized,
+                ...sanitizedProps,
                 children,
                 className: resolvedClassName,
                 ref,
             });
 
-            return createElement(finalAs, evaluatedProps);
+            return createElement(element, evaluatedProps);
         };
     };
 };
 
-/**
- * User: Oleg Kamlowski <oleg.kamlowski@thomann.de>
- * Date: 15.10.2019
- * Time: 21:31
- */
-export default closure;
+export default createFactory;
