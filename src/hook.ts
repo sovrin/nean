@@ -28,7 +28,7 @@ export const interceptHook = (hooks: Hook[] = [], destructive = false) => {
     };
 };
 
-export const evaluate = (use: Hook[], context: any) => {
+export const evaluate = (use?: Hook[], context?: any) => {
     if (!use) {
         return context;
     }
@@ -49,7 +49,7 @@ export const evaluate = (use: Hook[], context: any) => {
     return context;
 };
 
-export const aggregate = (use: Hook[]): any => {
+export const aggregate = (use?: Hook[]): any => {
     if (!use) {
         return {};
     }
