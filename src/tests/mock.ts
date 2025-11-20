@@ -1,29 +1,27 @@
 import type { Config } from "../.";
-import { JSX } from "react";
+import { ReactNode } from "react";
 import { vi } from "vitest";
-import { Resolver } from "../types";
+import { Resolver } from "../resolver";
+
+const reactMocks = {
+    forwardRef: (callback: (props: object) => ReactNode) => (props: object) =>
+        callback(props),
+    createElement: (type: string, props: object) => ({ type, props }),
+};
+
+vi.mock("react", () => reactMocks);
 
 type Mock = (
-    formatter?: Function,
-) => <T>(
-    props: T,
-    config: Config<T, any>,
-) => (props: unknown) => boolean | string | JSX.Element;
+    resolver?: Resolver,
+) => <Props extends object>(
+    props: Props,
+    config: Config<Props, any>,
+) => ReactNode;
 
 export async function createMock(): Promise<Mock> {
-    const reactMocks = {
-        forwardRef:
-            (callback: (props: unknown) => unknown) => (props: unknown) =>
-                callback(props),
-        createElement: (type: string, props: unknown) => ({ type, props }),
-    };
-
-    vi.mock("react", () => reactMocks);
-
     const { default: factory } = await import("../index");
 
-    return (formatter: Resolver) => (props, config) => {
-        // @ts-ignore
-        return factory(formatter)(config).render(props);
+    return (resolver) => (props, config) => {
+        return factory(resolver)(config)(props);
     };
 }

@@ -1,4 +1,4 @@
-import { interceptHook, createHook } from "../index";
+import { interceptHook, createHook } from "../hook";
 import { describe, it, expect } from "vitest";
 import { createMock } from "./mock";
 
@@ -6,7 +6,7 @@ const tester =
     () =>
     ({ type, props }: any) => ({
         classNameEquals: (value: unknown) =>
-            expect(value).equal(props.className),
+            expect(props.className).equal(value),
         typeEquals: (value: unknown) => expect(type).equal(value),
         isNullified: (keys: string[]) =>
             expect(keys.every((key) => props[key])).toBeFalsy(),
@@ -22,8 +22,8 @@ describe("nean", async () => {
     describe("factory", () => {
         describe("resolver", () => {
             it("should use custom resolver", () => {
-                const render = nean((className: string) =>
-                    [className, "custom"].join(" "),
+                const render = nean((...className) =>
+                    [className[0], "custom"].join(" "),
                 );
                 const props = {
                     foo: true,
