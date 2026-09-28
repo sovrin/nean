@@ -1,19 +1,17 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "module": "CommonJS",
-        "resolveJsonModule": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true,
-        "target": "ES6",
-        "moduleResolution": "Node",
-        "sourceMap": true,
-        "outDir": "./",
-        "baseUrl": "./src",
-        "declaration": true,
-        "jsx": "react"
-    },
-    "exclude": ["src/tests/**"],
-    "include": ["src/**/*"]
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"]
 }

@@ -1,115 +1,101 @@
-import {
-    createElement,
-    type JSX,
-    type PropsWithChildren,
-    type ReactNode,
-    type Ref,
-} from "react";
-import resolver, { type Resolver } from "./resolver";
-import { sanitize } from "./utils/array.utils";
-import { capture } from "./utils/proxy.utils";
-import { aggregate, evaluate, type Hook } from "./hook";
+import {createElement, type JSX, type PropsWithChildren, type ReactNode} from 'react';
+import {applyModifiers, collectSlots, type Mixin, type Slots} from './mixin';
+import defaultResolver, {type Resolver, type ResolverValue} from './resolver';
+import {capture, omit} from './utils/capture';
 
-export type CreateFactory = (resolver?: Resolver) => ComponentFactory;
+export type Tag = keyof JSX.IntrinsicElements;
+type IntrinsicProps<T extends Tag> = JSX.IntrinsicElements[T];
 
-export type IntrinsicElement = keyof JSX.IntrinsicElements;
-type IntrinsicProps<T extends IntrinsicElement> = JSX.IntrinsicElements[T];
-
-export type BaseComponentProps<T extends IntrinsicElement> = {
+export type BaseProps<T extends Tag = never> = {
     as?: T;
-    use?: Hook[];
+    mixins?: Mixin[];
     className?: string;
-    ref?: Ref<T>;
 };
 
-type MergedProps<
-    Props extends object,
-    Element extends IntrinsicElement,
-> = PropsWithChildren<
-    Props & BaseComponentProps<Element> & IntrinsicProps<Element>
+/**
+ * own props win over the ones of the element
+ */
+export type NeanProps<Props extends object, T extends Tag = never> = PropsWithChildren<
+    [T] extends [never]
+        ? Props & BaseProps
+        : Props & BaseProps<T> & Omit<IntrinsicProps<T>, keyof Props | keyof BaseProps>
 >;
 
-export type ComponentConfig<
-    Props extends object,
-    Element extends IntrinsicElement,
-> = {
-    as?: Element;
+export type Config<Props extends object, T extends Tag = never> = {
+    /** default element, can be overwritten by the `as` prop */
+    as?: T;
+    /** base className of the element */
     className?: string;
-    style?: (props: MergedProps<Props, Element>) => any;
-    extend?: (props: MergedProps<Props, Element>) => any;
-    render?: (
-        props: MergedProps<Props, Element>,
-        hooks?: Record<string, Function>,
-    ) => ReactNode;
+    /** translates props into classNames */
+    variants?: (props: NeanProps<Props, T>) => ResolverValue;
+    /** adds or aliases props of the element */
+    attrs?: (props: NeanProps<Props, T>) => Record<string, unknown>;
+    /** replaces the children of the element */
+    render?: (props: NeanProps<Props, T>, slots: Slots) => ReactNode;
 };
 
-export type ComponentFactory = <
-    Props extends object = never,
-    Element extends IntrinsicElement = never,
+export type Component<Props extends object, Default extends Tag = never> = <
+    T extends Tag = Default,
 >(
-    config: ComponentConfig<Props, Element>,
-) => Component<Props, Element>;
+    props: NeanProps<Props, T>,
+) => ReactNode;
 
-type Component<
-    Props extends object,
-    Element extends IntrinsicElement = never,
-> = {
-    <T extends IntrinsicElement = Element>(
-        props: [T] extends [never]
-            ? BaseComponentProps<never> & Props
-            : BaseComponentProps<T> & IntrinsicProps<T> & Props,
-    ): ReactNode;
+export type Factory = <Props extends object = object, T extends Tag = never>(
+    config: Config<Props, T>,
+) => Component<Props, T>;
 
-    <T extends IntrinsicElement = Element>(
-        props: IntrinsicProps<T> & BaseComponentProps<T> & Props,
-    ): ReactNode;
+/**
+ * the element is part of the name, so it does not need to be repeated as type
+ * `nean().button<Props>({...})`
+ */
+export type TagFactories = {
+    [T in Tag]: <Props extends object = object>(
+        config: Omit<Config<Props, T>, 'as'>,
+    ) => Component<Props, T>;
 };
 
-const createFactory: CreateFactory = (resolveClassNames = resolver) => {
-    return ({
-        as: defaultElement,
-        className: baseClassName,
-        style,
-        extend,
-        render = ({ children }) => children,
-    }) => {
-        return (props: BaseComponentProps<never>) => {
-            const { captured, release, keys } = capture(props);
+export type CreateNean = (resolver?: Resolver) => Factory & TagFactories;
 
-            const styleClasses = style?.(captured) ?? null;
-            const extensions = extend?.(captured) ?? null;
+const reserved = new Set(['as', 'mixins']);
 
-            const mergedProps = { ...props, ...extensions };
-            const { use, as, className, ref } =
-                mergedProps as BaseComponentProps<never>;
+const renderChildren = ({children}: PropsWithChildren) => children;
 
-            const children = render?.(captured, aggregate(use)) ?? null;
+export const createNean: CreateNean = (resolver = defaultResolver) => {
+    const factory: Factory =
+        ({as: defaultElement, className: baseClassName, variants, attrs, render}) =>
+        (props) => {
+            const {props: captured, used, release} = capture(props);
 
+            const variantClasses = variants?.(captured);
+            const extensions = attrs?.(captured);
+            const {as, mixins} = {...props, ...extensions} as BaseProps<Tag>;
+
+            const children = (render ?? renderChildren)(captured, collectSlots(mixins));
             release();
 
-            if (use) keys.add("use");
+            const element = as ?? defaultElement;
+            if (!element) return children ?? null;
 
-            const element = as || defaultElement;
-            if (!element) return children;
-
-            if (as) keys.add("as");
-
-            const resolvedClassName =
-                baseClassName || styleClasses || className
-                    ? resolveClassNames(baseClassName, styleClasses, className)
+            const className =
+                baseClassName || variantClasses || props.className
+                    ? resolver(baseClassName, variantClasses, props.className)
                     : undefined;
 
-            const sanitizedProps = sanitize([...keys], mergedProps);
-            const evaluatedProps = evaluate(use, {
-                ...sanitizedProps,
-                children,
-                className: resolvedClassName,
-                ref,
-            });
+            const rest = omit({...omit(props, used), ...extensions}, reserved);
+            const elementProps = applyModifiers(mixins, {...rest, children, className});
 
-            return createElement(element, evaluatedProps);
+            return createElement(element, elementProps);
         };
-    };
+
+    return new Proxy(factory, {
+        get: (target, key, receiver) =>
+            typeof key === 'string' && !(key in target)
+                ? (config: object) => target({...config, as: key as Tag})
+                : Reflect.get(target, key, receiver),
+    }) as Factory & TagFactories;
 };
 
-export default createFactory;
+/** ready to use with the default resolver */
+const nean = createNean();
+
+export default nean;

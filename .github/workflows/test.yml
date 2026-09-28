@@ -1,6 +1,6 @@
 name: test and coverage
 
-on: [ push, pull_request ]
+on: [push, pull_request]
 env:
   CI: true
 
@@ -16,6 +16,9 @@ jobs:
         with:
           node-version: 24
       - run: npm i
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run format:check
       - run: npm run coverage
 
       - name: publish coverage

@@ -8,203 +8,149 @@
 [![dependencies][dep-src]][dep-href]
 [![License][license-src]][license-href]
 
-> js framework for neat and lean components
+> neat and lean react components for css-only frameworks
 
 ## Installation
 ```bash
 $ npm i nean
 ```
+Requires `react` >= 19.
 
 ## About
 The purpose of this library is to reduce the boilerplate code needed to create react components for css-only frameworks.
 Focusing only on the necessary bits.
 
 ## Usage
-```js
-import react, {Fragment} from 'react';
+```tsx
 import nean from 'nean';
 
-const Button = nean()({
-    as: 'button',
+const Button = nean.button<{rounded?: boolean; primary?: boolean; md?: number}>({
     className: 'btn',
-    style: ({rounded, primary}) => ({
+    variants: ({rounded, primary}) => ({
         'btn--rounded': rounded,
         'btn--primary': primary,
     }),
-    extend: ({md}) => ({
+    attrs: ({md}) => ({
         'data-size': md,
     }),
-    render: ({children, prefix}) => (
-        <Fragment>
-            {prefix}{children}
-        </Fragment>
-    ),
 });
 
-<Button
-    prefix="foo"
-    md={2}
-    rounded
-    primary
->
-    bar
-</Button>
+<Button md={2} rounded primary>bar</Button>
 
 // ===
 
-<button 
-    className="btn btn--rounded btn--primary" 
-    data-size="2"
->
-    foobar
-</button>
+<button className="btn btn--rounded btn--primary" data-size="2">bar</button>
 ```
 
 ## API
-- <a href="#ctor"><code><b>nean()</b></code></a>
-- <a href="#interceptHook"><code>interceptHook()</code></a>
-- <a href="#createHook"><code>createHook()</code></a>
+- <a href="#factory"><code><b>nean</b></code></a>
+- <a href="#mixins"><code>mixins</code></a>
+- <a href="#createNean"><code>createNean()</code></a>
+- <a href="#createModifier"><code>createModifier()</code></a>
+- <a href="#createSlot"><code>createSlot()</code></a>
+- <a href="#resolver"><code>resolver()</code></a>
 
-<a name="library"></a>
-### Library
+<a name="factory"></a>
+### `nean`
+The factory, one method per element: `nean.button<Props>({...})`.
 
-<a name="ctor"></a>
-### `nean(resolver: Resolver)`
-#### `Factory`
-|             | type      | default               | description                                                |
-|:------------|:----------|:----------------------|:-----------------------------------------------------------|
-| `as`        | string?   |                       | type of element e.g. `span`, `div`, `button`               |
-| `className` | string?   |                       | base className of the element                              |
-| `style`     | Function? | `props`               | provides an object with all consumed props for translation |
-| `extend`    | Function? | `props`               | allows extending or aliasing of props                      |
-| `render`    | Function? | `{children}, [hooks]` | overwrite of default render function, array of hooks       |
+|             | type      | description                                                   |
+|:------------|:----------|:--------------------------------------------------------------|
+| `as`        | string?   | default element, only for `nean<Props>({...})` (see below)    |
+| `className` | string?   | base className                                                |
+| `variants`  | Function? | receives the props, returns classNames (see `resolver`)       |
+| `attrs`     | Function? | receives the props, returns props to add to the element       |
+| `render`    | Function? | receives the props and the `slots`, returns the children      |
 
-##### `as`
-Pass type `button` to create a plain button component.
-```javascript
-import nean from 'nean';
+The final className is `className`, then the result of `variants`, then the `className` a consumer passes.
 
-const Button = nean()({
-    as: 'button',
+The element is the name of the method, `nean.button<Props>({...})`, so it is only written once.
+Without a fixed element, use `nean<Props>({...})`; a component like that renders only its children until you pass `as`.
+
+Every prop read in `variants`, `attrs` or `render` is consumed and is not passed to the element.
+Everything else is passed through. That includes a rest spread: `render: ({children, ...rest}) => ...` reads, and so consumes, every prop.
+If `attrs` returns a key that was consumed, the returned value is passed, e.g. `attrs: ({disabled}) => ({disabled})` keeps `disabled` on the element.
+
+Every component also accepts `as` to change the element per usage, and `mixins`.
+
+```tsx
+const Link = nean.a<{active?: boolean}>({
+    variants: ({active}) => ({active}),
 });
+
+<Link as="button" active />; // renders a button, typed as one
 ```
 
-***
+Props you declare win over the props of the element, so a `size` prop of your own never clashes with the native one.
 
-##### `className`
-By adding `className`, the component receives a base className. 
-```javascript
-import nean from 'nean';
+<a name="createNean"></a>
+### `createNean(resolver?: Resolver)`
+Returns a factory of its own. Pass your own `resolver` to change how classNames are joined.
 
-const Button = nean()({
-    as: 'button',
-    className: 'btn',
-});
+```ts
+import {createNean} from 'nean';
+
+const nean = createNean((...values) => myJoin(values));
 ```
 
-***
+<a name="mixins"></a>
+### `mixins`
+Every component accepts `mixins`, a list of small extras a consumer can add per usage. There are two kinds.
 
-##### `style(props)`
-To bind props to css classNames of the chosen framework, return an object with the new classNames with props as values. 
-`style` recursively evaluates every property/value by its truthiness and keeps its key.
-```javascript
-import nean from 'nean';
+<a name="createModifier"></a>
+#### `createModifier(modify)`
+Changes the props of the rendered element. `modify` receives the final props of the element (including `children` and the resolved `className`) and returns the ones to change.
+Modifiers run in order, each seeing the result of the previous.
 
-const Button = nean()({
-    as: 'button',
-    style: (({primary}) => ({
-        'btn-primary': primary
-    })),
-});
+```tsx
+import {createModifier, resolver} from 'nean';
+
+const withTooltip = (text: string) =>
+    createModifier(({className}) => ({
+        className: resolver(className, 'tooltip'),
+        'data-tooltip': text,
+    }));
+
+<Button mixins={[withTooltip('hello')]} />
 ```
 
-***
+<a name="createSlot"></a>
+#### `createSlot(name, render)`
+Provides content the component places itself. `render` receives a position and returns a node.
+The component reads it from the second argument of its own `render`, e.g. `icon('left')`.
+Extra props for the slot can be passed as second argument, `icon('left', {size: 'lg'})`, and arrive as the second parameter of the slot's `render`.
+A slot that was not passed renders nothing.
 
-##### `extend(props)`
-Sometimes, css frameworks have components which rely on data attributes.
-These can be set via `extend`. This function allows the extension of the original props.
-```javascript
-import nean from 'nean';
+```tsx
+import {createSlot} from 'nean';
 
-const Button = nean()({
-    as: 'button',
-    extend: (({badges}) => ({
-        'data-badges': badges
-    })),
-});
-```
-
-***
-
-##### `render(props)`
-It's possible to overwrite the render output via the `render` function.
-This allows to wrap your components `children` with other components.
-```javascript
-import React from 'react';
-import nean from 'nean';
-
-const Link = nean()({
-    as: 'a',
-    render: (({children}) => (
-        <Button>
-            {children}
-        </Button>
-    )),
-});
-```
-
-***
-
-<a name="interceptHook"></a>
-### `interceptHook(use[, destructive = false])`
-nean components accept custom tailored hooks which can be addressed individually later on `render`.
-
-* `use` (array of hooks)
-* optional `destructive` (shift used hook from array of hooks)
-
-<a name="createHook"></a>
-### `createHook(name, hook)`
-hooks can extend a component via provided props.
-
-* `name` (name of the hook)
-* `hook` (hook function)
-
-```javascript
-import React from 'react';
-import nean, {interceptHook, createHook} from 'nean';
-
-// definition
-const Button = nean()({
-    render: ({children, use}) => {
-        const icon = interceptHook(use)('icon');
-
-        return (
-            <Fragment>
-                {icon('left')} {children} {icon('right')}
-            </Fragment>
-        );
-    },
+const Button = nean.button({
+    render: ({children}, {icon}) => [icon('left'), children, icon('right')],
 });
 
-const useIcon = (type, side = 'left') => createHook('icon', (check) => {
-    if (check !== side) {
-        return null;
-    }
-
-    return (
-        <Icon type={type}/>
+const withIcon = (type: string, side: 'left' | 'right' = 'left') =>
+    createSlot<'left' | 'right'>('icon', (position) =>
+        position === side ? <Icon type={type} /> : null,
     );
-});
 
-// usage
-const App = () => (
-    <Button use={[
-        useIcon('hamburger', 'right')
-    ]}>
-        hello world
-    </Button>
-)
+<Button mixins={[withIcon('hamburger', 'right')]}>menu</Button>
 ```
+
+<a name="resolver"></a>
+### `resolver(...values)`
+Joins values into a className: strings and numbers as they are, objects by their truthy keys, arrays by what their items resolve to. Everything falsy is dropped.
+
+```ts
+resolver('a', {b: true, c: false}, ['d', [null, 'e']]); // "a b d e"
+```
+
+## Migrating from 4.x
+- prop `use` is now `mixins`
+- `style` is now `variants`, `extend` is now `attrs`
+- `nean()` is now `nean`, use `createNean(resolver)` for a custom resolver
+- `createHook(name, fn)` is split into `createModifier(fn)` and `createSlot(name, fn)`
+- `interceptHook` is gone, slots are passed to `render` as its second argument
+- `resolver(true)` no longer adds `"true"` as a className, and functions are no longer resolved
 
 ## Licence
 MIT License, see [LICENSE](./LICENSE)

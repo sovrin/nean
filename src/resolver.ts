@@ -5,71 +5,47 @@ export type ResolverValue =
     | undefined
     | null
     | ResolverValue[]
-    | { [key: string]: ResolverValue }
-    | (() => ResolverValue);
-
-const resolve = (value: any): string[] => {
-    if (!value) return [];
-
-    const type = typeof value;
-    if (type === "string" || type === "number") {
-        return [String(value)];
-    }
-
-    if (type === "boolean") {
-        return [value];
-    }
-
-    if (type === "function") {
-        return resolve(value());
-    }
-
-    if (Array.isArray(value)) {
-        const result: string[] = [];
-        for (let i = 0; i < value.length; i++) {
-            const nested = resolve(value[i]);
-            if (nested.length) {
-                result.push(...nested);
-            }
-        }
-
-        return result;
-    }
-
-    if (type === "object") {
-        const result: string[] = [];
-        for (const key in value) {
-            if (value[key]) {
-                result.push(key);
-            }
-        }
-
-        return result;
-    }
-
-    return [];
-};
+    | {[key: string]: ResolverValue};
 
 export type Resolver = (...values: ResolverValue[]) => string;
 
-export const resolver: Resolver = (...values): string => {
-    if (!values.length) return "";
+const resolve = (value: ResolverValue): string => {
+    if (!value) return '';
 
-    const classes: string[] = [];
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return String(value);
+    if (typeof value !== 'object') return '';
 
-    for (let i = 0; i < values.length; i++) {
-        const processed = resolve(values[i]);
-        if (processed.length) {
-            classes.push(...processed);
+    let result = '';
+    const add = (className: string) => {
+        if (className) result += (result && ' ') + className;
+    };
+
+    if (Array.isArray(value)) {
+        for (const nested of value) add(resolve(nested));
+    } else {
+        for (const key in value) {
+            if (value[key]) add(key);
         }
     }
 
-    return classes.join(" ").trim();
+    return result;
 };
 
 /**
- * User: Oleg Kamlowski <oleg.kamlowski@thomann.de>
- * Date: 28.04.2022
- * Time: 16:31
+ * joins every truthy value into a className string:
+ * strings and numbers as they are, objects by their truthy keys,
+ * arrays by what their items resolve to
  */
+export const resolver: Resolver = (...values) => {
+    let result = '';
+
+    for (const value of values) {
+        const className = resolve(value);
+        if (className) result += (result && ' ') + className;
+    }
+
+    return result;
+};
+
 export default resolver;

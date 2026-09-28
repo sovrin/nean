@@ -1,8 +1,15 @@
-/**
- * User: Oleg Kamlowski <oleg.kamlowski@thomann.de>
- * Date: 23.09.2019
- * Time: 21:14
- */
-export { default, type CreateFactory as nean, type ComponentConfig as Config } from "./nean";
-export { interceptHook, createHook, type Hook } from "./hook";
-export { resolver, type Resolver, type ResolverValue } from "./resolver";
+export {default, createNean} from './nean';
+export type {
+    BaseProps,
+    Component,
+    NeanProps,
+    Config,
+    CreateNean,
+    Factory,
+    TagFactories,
+    Tag,
+} from './nean';
+export {createModifier, createSlot} from './mixin';
+export type {ElementProps, Mixin, Modifier, Slot, SlotRenderer, Slots} from './mixin';
+export {resolver} from './resolver';
+export type {Resolver, ResolverValue} from './resolver';

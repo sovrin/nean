@@ -1,30 +1,33 @@
-import resolver from "../resolver";
-import { describe, it, expect } from "vitest";
+import resolver from '../resolver';
+import {describe, it, expect} from 'vitest';
 
-describe("nean", () => {
-    describe("resolver", () => {
-        it("should resolve nothing", () => {
-            const expected = "";
+describe('nean', () => {
+    describe('resolver', () => {
+        it('should resolve nothing', () => {
+            const expected = '';
             const actual = resolver();
 
             expect(actual).equal(expected);
         });
 
-        it("should ignore unknown types", () => {
-            const expected = "";
-            const actual = resolver(Symbol("x") as any);
+        it('should ignore unknown types', () => {
+            const expected = '';
+            const actual = resolver(Symbol('x') as any);
 
             expect(actual).equal(expected);
         });
 
-        it("should resolve complete example", () => {
+        it('should ignore functions', () => {
+            expect(resolver((() => 'foo') as never)).equal('');
+        });
+
+        it('should resolve complete example', () => {
             const props = {
-                size: "big",
+                size: 'big',
                 active: true,
             };
 
-            const expected =
-                "true 1 foo biz buz nested bar btn-big active foo computed";
+            const expected = '1 foo biz buz nested bar btn-big active foo';
             const actual = resolver(
                 true,
                 false,
@@ -33,25 +36,19 @@ describe("nean", () => {
                 NaN,
                 null,
                 0,
-                "foo",
-                ["biz", "buz"],
-                [["nested"]],
+                'foo',
+                ['biz', 'buz'],
+                [['nested']],
                 [null],
                 {
                     bar: true,
                 },
                 {
-                    ["btn-" + props.size]: props.size,
+                    ['btn-' + props.size]: props.size,
                     active: props.active,
                 },
                 {
                     foo: 2,
-                },
-                () => {
-                    return null;
-                },
-                () => {
-                    return "computed";
                 },
             );
 

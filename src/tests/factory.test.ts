@@ -1,540 +1,267 @@
-import { interceptHook, createHook } from "../hook";
-import { describe, it, expect } from "vitest";
-import { createMock } from "./mock";
+import {describe, expect, it, vi} from 'vitest';
+import {createModifier, createSlot} from '../mixin';
+import {createNean, type Config} from '../nean';
+import type {Resolver} from '../resolver';
 
-const tester =
-    () =>
-    ({ type, props }: any) => ({
-        classNameEquals: (value: unknown) =>
-            expect(props.className).equal(value),
-        typeEquals: (value: unknown) => expect(type).equal(value),
-        isNullified: (keys: string[]) =>
-            expect(keys.every((key) => props[key])).toBeFalsy(),
-        isNotNull: (key: string) => expect(props[key]).not.toBeFalsy(),
-        is: (key: string, value: unknown) => expect(props[key]).equal(value),
-    });
+vi.mock('react', () => ({
+    createElement: (type: string, props: object) => ({type, props}),
+}));
 
-describe("nean", async () => {
-    const nean = await createMock();
-    const render = nean();
-    const test = tester();
+type Rendered = {type: string; props: Record<string, unknown>};
 
-    describe("factory", () => {
-        describe("resolver", () => {
-            it("should use custom resolver", () => {
-                const render = nean((...className) =>
-                    [className[0], "custom"].join(" "),
-                );
-                const props = {
-                    foo: true,
-                    bar: false,
-                };
-                const element = render(props, {
-                    as: "div",
-                    className: "test",
-                    style: ({ foo, bar }) => ({
-                        foo,
-                        bar,
-                    }),
-                });
+const render = (props: object, config: Config<any, any>, resolver?: Resolver) =>
+    createNean(resolver)(config)(props) as unknown as Rendered;
 
-                const { classNameEquals } = test(element);
-                classNameEquals("test custom");
-            });
+describe('nean', () => {
+    describe('as', () => {
+        it('should return nothing', () => {
+            expect(render({}, {})).toBeNull();
         });
 
-        describe("as", () => {
-            it("should return nothing", () => {
-                const element = render({}, {});
-
-                expect(element).toBeNull();
-            });
-
-            it("should return children", () => {
-                const element = render(
-                    {},
-                    {
-                        render: () => {
-                            return "foo";
-                        },
-                    },
-                );
-
-                // @ts-ignore
-                assert(element === "foo");
-            });
-
-            it("should return div", () => {
-                const element = render(
-                    {},
-                    {
-                        as: "div",
-                    },
-                );
-
-                const { typeEquals } = test(element);
-                typeEquals("div");
-            });
+        it('should return children if there is no element', () => {
+            expect(render({}, {render: () => 'foo'})).toBe('foo');
         });
 
-        describe("style", () => {
-            it("should add primary className", () => {
-                const props = {
-                    primary: true,
-                };
-                const element = render(props, {
-                    as: "div",
-                    className: "test",
-                    style: ({ primary }) => ({
-                        primary,
-                    }),
-                });
-
-                const { classNameEquals, isNullified } = test(element);
-                classNameEquals("test primary");
-                isNullified(["primary"]);
-            });
-
-            it("should add primary className and pass through unused props", () => {
-                const props = {
-                    primary: true,
-                    secondary: true,
-                };
-                const element = render(props, {
-                    as: "div",
-                    className: "test",
-                    style: ({ primary }) => ({
-                        primary,
-                    }),
-                });
-
-                const { classNameEquals, isNullified } = test(element);
-                classNameEquals("test primary");
-                isNullified(["primary"]);
-            });
-
-            it("should add classNames and remove all used props", () => {
-                const props = {
-                    primary: true,
-                };
-                const element = render(props, {
-                    as: "div",
-                    className: "test",
-                    // @ts-ignore
-                    style: ({ primary, secondary }) => ({
-                        primary,
-                        secondary,
-                    }),
-                });
-
-                const { classNameEquals, isNullified } = test(element);
-                classNameEquals("test primary");
-                isNullified(["primary", "secondary"]);
-            });
-
-            it("should have no className", () => {
-                const props = {};
-                const element = render(props, {
-                    as: "div",
-                });
-
-                const { classNameEquals, isNullified } = test(element);
-                isNullified(["className"]);
-                classNameEquals(undefined);
-            });
-
-            it("should add aliased classNames and remove all used props while being aliased", () => {
-                const props = {
-                    primary: true,
-                    secondary: true,
-                };
-                const element = render(props, {
-                    as: "div",
-                    className: "test",
-                    style: ({ primary, secondary }) => ({
-                        foo: primary,
-                        bar: secondary,
-                    }),
-                });
-
-                const { classNameEquals, isNullified } = test(element);
-                classNameEquals("test foo bar");
-                isNullified(["primary", "secondary"]);
-            });
-
-            it("should not have duplicate classNames", () => {
-                const props = {
-                    primary: true,
-                    secondary: true,
-                };
-                const elementA = render(props, {
-                    as: "div",
-                    className: "test",
-                    style: ({ primary, secondary }) => ({
-                        foo: primary,
-                        bar: secondary,
-                    }),
-                });
-
-                const elementB = render(props, {
-                    as: "div",
-                    className: "test",
-                    style: ({ primary, secondary }) => ({
-                        foo: primary,
-                        bar: secondary,
-                    }),
-                });
-
-                test(elementA).classNameEquals("test foo bar");
-                test(elementB).classNameEquals("test foo bar");
-            });
+        it('should return div', () => {
+            expect(render({}, {as: 'div'}).type).toBe('div');
         });
 
-        describe("extend", () => {
-            it("should pass through extended prop and remove used", () => {
-                const props = {
-                    foo: "bar",
-                };
-                const element = render(props, {
-                    as: "div",
-                    extend: ({ foo }) => ({
-                        foobar: foo,
-                    }),
-                });
+        it('should overwrite element via props', () => {
+            const {type, props} = render({as: 'ul'}, {as: 'div'});
 
-                const { isNullified, isNotNull } = test(element);
-                isNullified(["foo"]);
-                isNotNull("foobar");
-            });
-
-            it("should pass through all extended props and remove used", () => {
-                const props = {
-                    foo: "bar",
-                    bar: "foo",
-                };
-                const element = render(props, {
-                    as: "div",
-                    extend: ({ foo, bar }) => ({
-                        foobar: foo,
-                        fizz: "buzz",
-                    }),
-                });
-
-                const { isNullified, isNotNull, is } = test(element);
-                isNullified(["foo", "bar"]);
-                isNotNull("foobar");
-                is("fizz", "buzz");
-            });
-
-            it("should pass through used extended prop and remove used", () => {
-                const props = {
-                    foo: "bar",
-                    bar: "foo",
-                };
-                const element = render(props, {
-                    as: "div",
-                    extend: ({ foo }) => ({
-                        foobar: foo,
-                    }),
-                });
-
-                const { isNullified, isNotNull } = test(element);
-                isNullified(["foo"]);
-                isNotNull("bar");
-            });
+            expect(type).toBe('ul');
+            expect(props).not.toHaveProperty('as');
         });
 
-        describe("render", () => {
-            it('should return "bar" while keeping children prop', () => {
-                const props = {
-                    foo: "bar",
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({ children, foo }) => foo,
-                });
+        it('should overwrite element via extend', () => {
+            const {type, props} = render({}, {as: 'div', attrs: () => ({as: 'ul'})});
 
-                const { is, isNullified, isNotNull } = test(element);
-                isNullified(["foo"]);
-                isNotNull("children");
-                is("children", "bar");
-            });
-
-            it('should return "bar" while removing children prop', () => {
-                const props = {
-                    foo: "bar",
-                    children: "children",
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({ foo }) => foo,
-                });
-
-                const { isNullified, is } = test(element);
-                isNullified(["foo"]);
-                is("children", "bar");
-            });
-        });
-
-        describe("use", () => {
-            const useFoo = (value) =>
-                createHook("foo", (current) => {
-                    return value === current;
-                });
-
-            const useBar = (foo) =>
-                createHook("bar", ({ bar } = { bar: null }) => ({
-                    foo,
-                    bar,
-                }));
-
-            it("should overwrite type to ul via props", () => {
-                const props = {
-                    as: "ul",
-                };
-                const element = render(props, {
-                    as: "div",
-                });
-
-                const { typeEquals, isNullified } = test(element);
-                typeEquals("ul");
-                isNullified(["use"]);
-            });
-
-            it("should overwrite type to while being extended", () => {
-                const props = {};
-                const element = render(props, {
-                    as: "div",
-                    extend: () => ({
-                        as: "ul",
-                    }),
-                });
-
-                const { typeEquals, isNullified } = test(element);
-                typeEquals("ul");
-                isNullified(["use"]);
-            });
-
-            it("should do nothing", () => {
-                const props = {};
-                const element = render(props, {
-                    as: "div",
-                    render: () => {
-                        const unknown = interceptHook()("unknown");
-                        expect(unknown()).toBeUndefined();
-
-                        return null;
-                    },
-                });
-
-                const { typeEquals, isNullified } = test(element);
-                typeEquals("div");
-                isNullified(["use"]);
-            });
-
-            it("should use custom hook", () => {
-                const props = {
-                    use: [useFoo("foo")],
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({ use }) => {
-                        const unknown = interceptHook(use)("unknown");
-                        expect(unknown()).toBeUndefined();
-
-                        return null;
-                    },
-                });
-
-                const { typeEquals, isNullified } = test(element);
-                typeEquals("div");
-                isNullified(["use"]);
-            });
-
-            it("should intercept custom hook", () => {
-                const props = {
-                    use: [useFoo("foo"), useBar("bar")],
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({ use }) => {
-                        const foo = interceptHook(use)("foo");
-                        const bar = interceptHook(use)("bar");
-                        expect(foo("foo")).equal(true);
-                        expect(bar().foo).equal("bar");
-                        expect(bar().bar).equal(null);
-
-                        return null;
-                    },
-                });
-
-                const { typeEquals, isNullified, is } = test(element);
-                typeEquals("div");
-                isNullified(["use"]);
-                is("foo", "bar");
-                is("bar", undefined);
-            });
-
-            it("should intercept custom hook in render as second parameter", () => {
-                const useFoo = (value) =>
-                    createHook("foo", (current) => {
-                        return value === current;
-                    });
-
-                const useBar = (foo) =>
-                    createHook("bar", ({ bar } = { bar: null }) => ({
-                        foo,
-                        bar,
-                    }));
-
-                const props = {
-                    use: [useFoo("foo"), useBar("bar")],
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({ use }, { foo, bar }) => {
-                        expect(foo("foo")).equal(true);
-                        expect(bar().foo).equal("bar");
-                        expect(bar().bar).equal(null);
-
-                        return null;
-                    },
-                });
-
-                const { typeEquals, isNullified, is } = test(element);
-                typeEquals("div");
-                isNullified(["use"]);
-                is("foo", "bar");
-                is("bar", undefined);
-            });
-
-            it("should ignore hook value", () => {
-                const props = {
-                    as: "ul",
-                    use: [],
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({ use }) => {
-                        expect(use).length(0);
-
-                        return "li";
-                    },
-                });
-
-                const { typeEquals, isNullified, is } = test(element);
-                typeEquals("ul");
-                isNullified(["use"]);
-                is("children", "li");
-            });
-
-            it("should shift hook from hook stack", () => {
-                const props = {
-                    use: [createHook("foo", (value) => value)],
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({ use }) => {
-                        const foo = interceptHook(use, true)("foo");
-
-                        expect(use).length(0);
-
-                        const anotherType = interceptHook(use, true)("foo");
-                        expect(anotherType()).toBeUndefined();
-
-                        return foo("bar");
-                    },
-                });
-
-                const { typeEquals, isNullified, is } = test(element);
-                typeEquals("div");
-                isNullified(["use"]);
-                is("children", "bar");
-            });
-
-            it("should expose hook in render", () => {
-                const props = {
-                    use: [
-                        createHook("foo", () => "foo"),
-                        createHook("bar", () => "bar"),
-                    ],
-                };
-                const element = render(props, {
-                    as: "div",
-                    render: ({}, { foo, bar }) => {
-                        return foo() + bar();
-                    },
-                });
-
-                const { typeEquals, isNullified, is } = test(element);
-                typeEquals("div");
-                isNullified(["use"]);
-                is("children", "foobar");
-            });
+            expect(type).toBe('ul');
+            expect(props).not.toHaveProperty('as');
         });
     });
 
-    describe("example", () => {
-        it("should return a real world example", () => {
+    describe('tag factories', () => {
+        it('should set the element by the name of the factory', () => {
+            const {type, props} = createNean().section({className: 'a'})({}) as unknown as Rendered;
+
+            expect(type).toBe('section');
+            expect(props.className).toBe('a');
+        });
+
+        it('should still be callable and overwritable via as', () => {
+            const Section = createNean().section({});
+
+            expect((Section({as: 'article'}) as unknown as Rendered).type).toBe('article');
+        });
+    });
+
+    describe('className', () => {
+        it('should have none by default', () => {
+            expect(render({}, {as: 'div'}).props.className).toBeUndefined();
+        });
+
+        it('should merge base, style and prop className', () => {
+            const {props} = render(
+                {primary: true, className: 'own'},
+                {as: 'div', className: 'base', variants: ({primary}) => ({primary})},
+            );
+
+            expect(props.className).toBe('base primary own');
+            expect(props).not.toHaveProperty('primary');
+        });
+
+        it('should use aliased classNames', () => {
+            const {props} = render(
+                {primary: true, secondary: true},
+                {
+                    as: 'div',
+                    className: 'test',
+                    variants: ({primary, secondary}) => ({foo: primary, bar: secondary}),
+                },
+            );
+
+            expect(props.className).toBe('test foo bar');
+            expect(props).not.toHaveProperty('primary');
+            expect(props).not.toHaveProperty('secondary');
+        });
+
+        it('should use custom resolver', () => {
+            const {props} = render({}, {as: 'div', className: 'test'}, (...values) =>
+                [values[0], 'custom'].join(' '),
+            );
+
+            expect(props.className).toBe('test custom');
+        });
+
+        it('should keep unused props', () => {
             const onClick = () => {};
+            const {props} = render(
+                {primary: true, secondary: true, onClick},
+                {as: 'div', variants: ({primary}) => ({primary})},
+            );
 
-            const props = {
-                size: "xl",
-                primary: true,
-                link: true,
-                onClick,
-                fiz: "1",
-                buz: "2",
-                foo: "foo",
-                bar: "bar",
-                as: "ul",
-            };
+            expect(props.secondary).toBe(true);
+            expect(props.onClick).toBe(onClick);
+        });
+    });
 
-            const element = render(props, {
-                as: "div",
-                className: "menu",
-                style: ({ primary, link, size }) => ({
-                    [`btn-${size}`]: size,
-                    "btn-primary": primary,
-                    link,
-                }),
-                extend: ({ fiz, buz }) => ({ foobar: fiz + buz }),
-                render: ({ foo }) => foo,
-            });
+    describe('attrs', () => {
+        it('should add props and remove the used ones', () => {
+            const {props} = render(
+                {foo: 'bar', bar: 'foo'},
+                {as: 'div', attrs: ({foo}) => ({foobar: foo, fizz: 'buzz'})},
+            );
 
-            const { isNullified, classNameEquals, typeEquals, is } =
-                test(element);
-            is("children", "foo");
-            is("foobar", "12");
-            is("onClick", onClick);
-            isNullified([
-                "use",
-                "fiz",
-                "buz",
-                "size",
-                "primary",
-                "link",
-                "foo",
-            ]);
-            typeEquals("ul");
-            classNameEquals("menu btn-xl btn-primary link");
+            expect(props).not.toHaveProperty('foo');
+            expect(props.bar).toBe('foo');
+            expect(props.foobar).toBe('bar');
+            expect(props.fizz).toBe('buzz');
+        });
+    });
+
+    describe('attrs with a consumed key', () => {
+        it('should pass the extended value even if the prop was consumed', () => {
+            const {props} = render(
+                {disabled: true},
+                {
+                    as: 'button',
+                    variants: ({disabled}) => ({disabled}),
+                    attrs: ({disabled}) => ({disabled}),
+                },
+            );
+
+            expect(props.disabled).toBe(true);
+            expect(props.className).toBe('disabled');
+        });
+    });
+
+    describe('render', () => {
+        it('should replace children', () => {
+            const {props} = render(
+                {foo: 'bar', children: 'children'},
+                {as: 'div', render: ({foo}) => foo},
+            );
+
+            expect(props.children).toBe('bar');
+            expect(props).not.toHaveProperty('foo');
         });
 
-        it("should not duplicate classes", () => {
-            const props = {
-                primary: true,
-            };
+        it('should pass children by default', () => {
+            expect(render({children: 'foo'}, {as: 'div'}).props.children).toBe('foo');
+        });
+    });
 
-            const element = render(props, {
-                as: "div",
-                className: "from_classname",
-                style: ({ primary }) => ({
-                    from_style: primary,
-                }),
+    describe('mixins', () => {
+        const withBadge = (badge: number) =>
+            createModifier(({className}) => ({
+                className: [className, 'badge'].filter(Boolean).join(' '),
+                'data-badge': badge,
+            }));
+
+        const withIcon = (icon: string, side: 'left' | 'right' = 'left') =>
+            createSlot<'left' | 'right'>('icon', (position, props) =>
+                position === side ? `${icon}${props ? '!' : ''}` : null,
+            );
+
+        it('should not leak into the element', () => {
+            const {props} = render({mixins: [withBadge(1)]}, {as: 'div'});
+
+            expect(props).not.toHaveProperty('mixins');
+        });
+
+        it('should modify element props', () => {
+            const {props} = render(
+                {mixins: [withBadge(2)], className: 'own'},
+                {as: 'div', className: 'base'},
+            );
+
+            expect(props.className).toBe('base own badge');
+            expect(props['data-badge']).toBe(2);
+        });
+
+        it('should apply modifiers in order on the result of the previous', () => {
+            const first = createModifier(() => ({foo: 1}));
+            const second = createModifier(({foo}) => ({bar: (foo as number) + 1}));
+            const {props} = render({mixins: [first, second]}, {as: 'div'});
+
+            expect(props.foo).toBe(1);
+            expect(props.bar).toBe(2);
+        });
+
+        it('should allow modifiers to return nothing', () => {
+            const nothing = createModifier(() => null);
+            const {props} = render({mixins: [nothing]}, {as: 'div', className: 'a'});
+
+            expect(props.className).toBe('a');
+        });
+
+        it('should let two modifiers add the same prop', () => {
+            const a = createModifier(() => ({'data-x': 1}));
+            const b = createModifier(() => ({'data-x': 2}));
+
+            expect(render({mixins: [a, b]}, {as: 'div'}).props['data-x']).toBe(2);
+        });
+
+        it('should expose slots to render', () => {
+            const {props} = render(
+                {mixins: [withIcon('i', 'right')]},
+                {
+                    as: 'div',
+                    render: (_, {icon}) => [icon('left'), 'text', icon('right', {})],
+                },
+            );
+
+            expect(props.children).toEqual([null, 'text', 'i!']);
+        });
+
+        it('should render nothing for a missing slot', () => {
+            const {props} = render({}, {as: 'div', render: (_, {icon}) => icon('left')});
+
+            expect(props.children).toBeNull();
+        });
+
+        it('should not treat slots as modifiers', () => {
+            const {props} = render({mixins: [withIcon('i')]}, {as: 'div'});
+
+            expect(Object.keys(props).toSorted()).toEqual(['children', 'className']);
+        });
+    });
+
+    describe('example', () => {
+        it('should return a real world example', () => {
+            const onClick = () => {};
+            const {type, props} = render(
+                {
+                    size: 'xl',
+                    primary: true,
+                    link: true,
+                    onClick,
+                    fiz: '1',
+                    buz: '2',
+                    foo: 'foo',
+                    as: 'ul',
+                },
+                {
+                    as: 'div',
+                    className: 'menu',
+                    variants: ({primary, link, size}) => ({
+                        [`btn-${size}`]: size,
+                        'btn-primary': primary,
+                        link,
+                    }),
+                    attrs: ({fiz, buz}) => ({foobar: fiz + buz}),
+                    render: ({foo}) => foo,
+                },
+            );
+
+            expect(type).toBe('ul');
+            expect(props).toEqual({
+                children: 'foo',
+                foobar: '12',
+                onClick,
+                className: 'menu btn-xl btn-primary link',
             });
-
-            const { classNameEquals } = test(element);
-            classNameEquals("from_classname from_style");
         });
     });
 });
