@@ -1,7 +1,7 @@
 import {createElement, type JSX, type PropsWithChildren, type ReactNode} from 'react';
 import {applyModifiers, collectSlots, type Mixin, type Slots} from './mixin';
 import defaultResolver, {type Resolver, type ResolverValue} from './resolver';
-import {capture, omit} from './utils/capture';
+import {assemble, capture} from './utils/capture';
 
 export type Tag = keyof JSX.IntrinsicElements;
 type IntrinsicProps<T extends Tag> = JSX.IntrinsicElements[T];
@@ -56,8 +56,6 @@ export type TagFactories = {
 
 export type CreateNean = (resolver?: Resolver) => Factory & TagFactories;
 
-const reserved = new Set(['as', 'mixins']);
-
 const renderChildren = ({children}: PropsWithChildren) => children;
 
 export const createNean: CreateNean = (resolver = defaultResolver) => {
@@ -68,7 +66,7 @@ export const createNean: CreateNean = (resolver = defaultResolver) => {
 
             const variantClasses = variants?.(captured);
             const extensions = attrs?.(captured);
-            const {as, mixins} = {...props, ...extensions} as BaseProps<Tag>;
+            const {as = props.as, mixins = props.mixins} = (extensions ?? {}) as BaseProps<Tag>;
 
             const children = (render ?? renderChildren)(captured, collectSlots(mixins));
             release();
@@ -76,15 +74,14 @@ export const createNean: CreateNean = (resolver = defaultResolver) => {
             const element = as ?? defaultElement;
             if (!element) return children ?? null;
 
-            const className =
+            const elementProps = assemble(props, used, extensions);
+            elementProps.children = children;
+            elementProps.className =
                 baseClassName || variantClasses || props.className
                     ? resolver(baseClassName, variantClasses, props.className)
                     : undefined;
 
-            const rest = omit({...omit(props, used), ...extensions}, reserved);
-            const elementProps = applyModifiers(mixins, {...rest, children, className});
-
-            return createElement(element, elementProps);
+            return createElement(element, applyModifiers(mixins, elementProps));
         };
 
     return new Proxy(factory, {

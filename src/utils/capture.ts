@@ -28,10 +28,27 @@ export const capture = <Props extends object>(target: Props): Captured<Props> =>
     };
 };
 
-export const omit = (source: object, keys: Set<string>): Record<string, unknown> => {
+const reserved = new Set(['as', 'mixins']);
+
+/**
+ * props for the element: the ones that were not used, plus the extensions,
+ * without `as` and `mixins`
+ */
+export const assemble = (
+    props: object,
+    used: Set<string>,
+    extensions?: Record<string, unknown>,
+): Record<string, unknown> => {
     const result: Record<string, unknown> = {};
-    for (const key of Object.keys(source)) {
-        if (!keys.has(key)) result[key] = source[key as keyof typeof source];
+
+    for (const key of Object.keys(props)) {
+        if (!used.has(key) && !reserved.has(key)) result[key] = props[key as keyof typeof props];
+    }
+
+    if (extensions) {
+        for (const key of Object.keys(extensions)) {
+            if (!reserved.has(key)) result[key] = extensions[key];
+        }
     }
 
     return result;

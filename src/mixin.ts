@@ -45,7 +45,11 @@ const empty: SlotRenderer = () => null;
 /**
  * slots by name, a missing slot renders nothing
  */
-export const collectSlots = (mixins: Mixin[] = []): Slots => {
+const noSlots: Slots = new Proxy(Object.create(null), {get: () => empty});
+
+export const collectSlots = (mixins?: Mixin[]): Slots => {
+    if (!mixins?.length) return noSlots;
+
     const slots: Slots = Object.create(null);
 
     for (const mixin of mixins) {
@@ -59,14 +63,15 @@ export const collectSlots = (mixins: Mixin[] = []): Slots => {
     });
 };
 
-export const applyModifiers = (mixins: Mixin[] = [], props: ElementProps): ElementProps => {
-    const result = {...props};
-
-    for (const mixin of mixins) {
-        if (mixin.type === 'modifier') {
-            Object.assign(result, mixin.modify(result));
+/**
+ * changes the given props in place
+ */
+export const applyModifiers = (mixins: Mixin[] | undefined, props: ElementProps): ElementProps => {
+    if (mixins) {
+        for (const mixin of mixins) {
+            if (mixin.type === 'modifier') Object.assign(props, mixin.modify(props));
         }
     }
 
-    return result;
+    return props;
 };
